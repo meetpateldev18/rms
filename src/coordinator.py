@@ -1,5 +1,4 @@
 import time
-from gemini_client import GeminiClient
 from agents import (
     FailureDetectionAgent,
     CodeLocalizationAgent,
@@ -9,6 +8,7 @@ from agents import (
     ValidationAgent,
 )
 from config import MAX_RETRY_ATTEMPTS
+import executor
 
 
 class RecoveryCoordinator:
@@ -25,7 +25,7 @@ class RecoveryCoordinator:
     4 LLM calls per attempt. Max 3 attempts = max 12 LLM calls per bug.
     """
 
-    def __init__(self, llm: GeminiClient):
+    def __init__(self, llm):
         self.llm = llm
         self.failure_detector = FailureDetectionAgent(llm)
         self.code_localizer = CodeLocalizationAgent(llm)
@@ -42,7 +42,7 @@ class RecoveryCoordinator:
         print("[Coordinator]   6. ValidationAgent         (Python)")
         print(f"[Coordinator] Max retry attempts: {MAX_RETRY_ATTEMPTS}")
 
-    def recover(self, program_name: str, buggy_code: str, test_cases: list) -> dict:
+    def recover(self, program_name: str, buggy_code: str, problem) -> dict:
         """Run the full 6-agent recovery loop for a single buggy program."""
         start_time = time.time()
         result = {
@@ -62,13 +62,21 @@ class RecoveryCoordinator:
         print(f"\n[Coordinator] Buggy code:")
         for i, line in enumerate(buggy_code.strip().split('\n'), 1):
             print(f"[Coordinator]   {i:3d} | {line}")
-        print(f"\n[Coordinator] Test cases: {len(test_cases)}")
-        for i, tc in enumerate(test_cases[:3]):
-            print(f"[Coordinator]   Test {i+1}: input={tc[0]} → expected={tc[1]}")
-        if len(test_cases) > 3:
-            print(f"[Coordinator]   ... and {len(test_cases)-3} more")
+        print(f"\n[Coordinator] Test style: {problem.test_style} ({problem.num_tests()} test unit(s))")
 
         prev_patch = None
+
+        # current_code is what the agents analyze/patch this attempt — starts as the
+        # original buggy code, but ratchets forward to a partially-fixed version if a
+        # failed attempt still made genuine progress (more tests passing than before).
+        # This lets later attempts focus on remaining bugs instead of re-discovering
+        # ones already fixed, which matters most for problems with multiple independent
+        # bugs (see DebugBench's "multiple error" category).
+        current_code = buggy_code
+        baseline = executor.run_tests(problem, buggy_code)
+        best_code = buggy_code
+        best_passed = baseline.get("passed", 0)
+        print(f"[Coordinator] Baseline: {best_passed}/{problem.num_tests()} tests already passing on the unmodified buggy code")
 
         for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
             result["attempts"] = attempt
@@ -77,35 +85,37 @@ class RecoveryCoordinator:
             print(f"\n{'~'*70}")
             print(f"[Coordinator] ===== ATTEMPT {attempt} of {MAX_RETRY_ATTEMPTS} =====")
             print(f"{'~'*70}")
+            if current_code != buggy_code:
+                print(f"[Coordinator] Building on prior partial progress ({best_passed} tests passing) rather than the original buggy code")
 
             # ---- AGENT 1: Failure Detection (LLM) ----
             print(f"\n[Coordinator] >>> STEP 1/6: Failure Detection")
-            failure_info = self.failure_detector.run(program_name, buggy_code, test_cases)
+            failure_info = self.failure_detector.run(program_name, current_code, problem)
             result["error_type"] = failure_info.get("error_type", "Unknown")
             result["agent_log"].append({"agent": "FailureDetection", "attempt": attempt, "output": failure_info})
 
             # ---- AGENT 2: Code Localization (LLM) ----
             print(f"\n[Coordinator] >>> STEP 2/6: Code Localization")
-            localization_info = self.code_localizer.run(program_name, buggy_code, failure_info)
+            localization_info = self.code_localizer.run(program_name, current_code, failure_info, problem.language)
             result["agent_log"].append({"agent": "CodeLocalization", "attempt": attempt, "output": localization_info})
 
             # ---- AGENT 3: Debugging (LLM) ----
             print(f"\n[Coordinator] >>> STEP 3/6: Debugging & Root Cause Analysis")
-            debugging_info = self.debugger.run(program_name, buggy_code, failure_info, localization_info, prev_patch)
+            debugging_info = self.debugger.run(program_name, current_code, failure_info, localization_info, prev_patch, problem.language)
             result["agent_log"].append({"agent": "Debugging", "attempt": attempt, "output": debugging_info})
 
             # ---- AGENT 4: Patch Generation (LLM) ----
             print(f"\n[Coordinator] >>> STEP 4/6: Patch Generation")
-            patch_info = self.patch_generator.run(program_name, buggy_code, debugging_info)
+            patch_info = self.patch_generator.run(program_name, current_code, debugging_info, problem.language)
             patched_code = patch_info.get("corrected_code", "")
             result["agent_log"].append({"agent": "PatchGeneration", "attempt": attempt, "output": {
                 "changes_made": patch_info.get("changes_made", ""),
                 "code_length": len(patched_code),
             }})
 
-            # ---- AGENT 5: Patch Application (Python) ----
+            # ---- AGENT 5: Patch Application ----
             print(f"\n[Coordinator] >>> STEP 5/6: Patch Application")
-            application_result = self.patch_applier.run(buggy_code, patched_code)
+            application_result = self.patch_applier.run(current_code, patched_code, problem.language)
             result["agent_log"].append({"agent": "PatchApplication", "attempt": attempt, "output": application_result})
 
             if not application_result["success"]:
@@ -116,7 +126,7 @@ class RecoveryCoordinator:
 
             # ---- AGENT 6: Validation (Python) ----
             print(f"\n[Coordinator] >>> STEP 6/6: Validation")
-            validation = self.validator.run(program_name, application_result["applied_code"], test_cases)
+            validation = self.validator.run(program_name, application_result["applied_code"], problem)
             result["agent_log"].append({"agent": "Validation", "attempt": attempt, "output": validation})
 
             llm_this_attempt = self.llm.total_calls - llm_before
@@ -133,7 +143,18 @@ class RecoveryCoordinator:
                 print(f"{'*'*70}")
                 return result
 
-            # Failed — save for retry context
+            # Failed — decide whether this attempt made genuine progress worth
+            # building on, or whether to fall back to the best code seen so far.
+            passed_now = validation.get("passed", 0)
+            if passed_now > best_passed:
+                print(f"\n[Coordinator] Partial progress: {passed_now} tests passing now (was {best_passed}) — continuing from this patch next attempt")
+                best_passed = passed_now
+                best_code = application_result["applied_code"]
+                current_code = best_code
+            else:
+                if current_code != best_code:
+                    print(f"\n[Coordinator] No improvement ({passed_now} vs best {best_passed}) — reverting to best-known code for next attempt")
+                current_code = best_code
             prev_patch = patched_code
             print(f"\n[Coordinator] Fix failed — will retry with error feedback")
 

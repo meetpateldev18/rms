@@ -7,8 +7,9 @@ Usage:
     python test_one.py
 """
 
-from gemini_client import GeminiClient
+from llm_factory import get_llm_client
 from coordinator import RecoveryCoordinator
+from problem import Problem
 
 # The buggy bitcount program (uses ^ instead of &)
 buggy_code = """def bitcount(n):
@@ -27,6 +28,9 @@ test_cases = [
     [[14], 3],
 ]
 
+problem = Problem(name="bitcount", buggy_code=buggy_code, test_style="tuple",
+                   dataset="quixbugs", test_cases=test_cases)
+
 print("=" * 60)
 print("TEST RUN: bitcount (single bug)")
 print("=" * 60)
@@ -35,11 +39,11 @@ print(f"Test cases: {len(test_cases)}")
 print(f"Expected: bitcount(127)=7, bitcount(128)=1\n")
 
 # Initialize
-llm = GeminiClient()
+llm = get_llm_client()
 coordinator = RecoveryCoordinator(llm)
 
 # Run recovery
-result = coordinator.recover("bitcount", buggy_code, test_cases)
+result = coordinator.recover("bitcount", buggy_code, problem)
 
 # Print result
 print("\n" + "=" * 60)

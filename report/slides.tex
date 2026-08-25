@@ -1,0 +1,443 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{caption}[numbered]
+
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+
+\newcommand{\good}{\textcolor{green!50!black}{\checkmark}}
+\newcommand{\bad}{\textcolor{red}{$\times$}}
+
+\title[Failure Recovery via Agentic AI]{Failure Recovery System Using Agentic AI\\in Software Development}
+\subtitle{A Multi-Agent Framework for Automated Program Repair}
+\author{Meet Patel (23BCE177) \and Vedant Mehta (23BCE180)}
+\institute[Nirma University]{School of Technology, Institute of Technology, Nirma University, Ahmedabad\\[4pt]\textit{Guide: Mr. AjayKumar Patel}\\[2pt]Research Methodology and Seminar (RMS) --- B.Tech CSE, Sem VI, AY 2025-26}
+\date{}
+
+\begin{document}
+
+% ---------------------------------------------------------------
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+\tableofcontents
+\end{frame}
+
+% =================================================================
+\section{Introduction}
+% =================================================================
+
+\begin{frame}{Background \& Motivation}
+\begin{itemize}
+    \item Modern CI/CD pipelines fail frequently due to compilation errors, runtime exceptions, and logical bugs.
+    \item Manual debugging is slow, expertise-dependent, and expensive at scale.
+    \item Classical Automated Program Repair (APR) --- search-based, template-based --- lacks reasoning and adaptability.
+    \item LLMs can understand and generate code, but \textbf{single-step prompting} lacks structured reasoning and iterative validation.
+\end{itemize}
+\vspace{6pt}
+\begin{block}{Key Question}
+Can a \emph{structured, multi-agent} LLM pipeline outperform a single-prompt LLM baseline at automated failure recovery --- and does that answer depend on the model or the bugs?
+\end{block}
+\end{frame}
+
+\begin{frame}{Research Gap}
+\begin{itemize}
+    \item Traditional APR relies on fixed repair templates / limited search strategies.
+    \item Single-step LLM repair lacks structured planning and iterative validation.
+    \item Existing systems mostly target \emph{patch generation}, not the full recovery workflow (detect $\to$ localize $\to$ diagnose $\to$ patch $\to$ validate).
+    \item Little work evaluates multi-agent orchestration \emph{across multiple benchmarks and multiple model capabilities} rather than one favorable setup.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Objectives}
+\begin{enumerate}
+    \item Design a multi-agent failure-recovery architecture using Agentic AI.
+    \item Automate detection, debugging, and validation via LLM-powered agents.
+    \item Generalize to \textbf{three} benchmarks with heterogeneous test formats: QuixBugs, HumanEvalFix, DebugBench.
+    \item Evaluate under \textbf{two} backends of very different capability: Gemini (hosted) vs.\ Qwen2.5-Coder 7B (local, on-device).
+    \item Compare against a single-prompt baseline in \emph{every} configuration.
+    \item Measure success rate, Pass@1, MTTR --- and document infrastructure issues found at scale.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Contributions}
+\begin{itemize}
+    \item A structured \textbf{six-agent} architecture for automated failure recovery.
+    \item A \textbf{dataset-agnostic} execution layer unifying three test formats (tuple I/O, assert-based, LeetCode-style example I/O).
+    \item A \textbf{local inference backend} (Qwen2.5-Coder 7B via Ollama) with multi-key quota-rotation for the Gemini backend.
+    \item A full \textbf{3 datasets $\times$ 2 backends} evaluation matrix --- showing multi-agent's benefit is \emph{conditional}, not fixed.
+    \item Three documented \textbf{infrastructure defects} (threading/signals, timeout gaps, quota exhaustion) found only via multi-hour unattended runs.
+\end{itemize}
+\end{frame}
+
+% =================================================================
+\section{Related Work}
+% =================================================================
+
+\begin{frame}{Evolution of Program Repair Approaches}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Approach} & \textbf{Reasoning} & \textbf{Iterative} & \textbf{Multi-Agent} \\
+\midrule
+GenProg & No & Yes & No \\
+TBar & No & No & No \\
+CoCoNuT & Learned & No & No \\
+AlphaRepair & Learned & No & No \\
+ChatRepair & LLM & Yes & No \\
+SWE-Agent & LLM & Yes & No \\
+\textbf{Ours} & \textbf{LLM} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\vspace{4pt}
+Also related: SWE-bench, AutoCodeRover, Agentless, ReAct (agentic reasoning); autonomic computing's MAPE loop (self-healing systems).
+\end{frame}
+
+% =================================================================
+\section{System Architecture}
+% =================================================================
+
+\begin{frame}{Six-Agent Recovery Architecture}
+\begin{columns}
+\begin{column}{0.55\textwidth}
+\begin{enumerate}
+    \item \textbf{Failure Detection} (LLM) --- run tests, classify failure type
+    \item \textbf{Code Localization} (LLM) --- pinpoint the faulty line
+    \item \textbf{Debugging} (LLM) --- root-cause analysis + fix strategy
+    \item \textbf{Patch Generation} (LLM) --- write corrected function
+    \item \textbf{Patch Application} (Python) --- apply \& check syntax
+    \item \textbf{Validation} (Python) --- run full test suite
+\end{enumerate}
+\end{column}
+\begin{column}{0.45\textwidth}
+\small
+\textbf{Coordinator} manages the loop: retries up to 3 times, feeding validation errors back as context.\\[8pt]
+4 LLM calls/attempt $\times$ 3 attempts $=$ up to \textbf{12 LLM calls per bug}.
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Recovery Loop (Algorithm)}
+\begin{algorithm}[H]
+\small
+\begin{algorithmic}[1]
+\REQUIRE Buggy program $P$, Test suite $T$, Max attempts $N=3$
+\ENSURE Patched program $P'$ or failure report
+\STATE $output \leftarrow$ Execute($P$, $T$)
+\FOR{$attempt = 1$ \TO $N$}
+    \STATE $failure \leftarrow$ FailureDetection($P$, $output$)
+    \STATE $location \leftarrow$ CodeLocalization($P$, $failure$)
+    \STATE $analysis \leftarrow$ Debugging($P$, $failure$, $location$)
+    \STATE $patch \leftarrow$ PatchGeneration($P$, $analysis$)
+    \STATE $P' \leftarrow$ PatchApplication($P$, $patch$)
+    \STATE $result \leftarrow$ Validation($P'$, $T$)
+    \IF{$result$.all\_passed} \RETURN $P'$
+    \ELSE \STATE $output \leftarrow result$.errors \COMMENT{feed back for retry}
+    \ENDIF
+\ENDFOR
+\RETURN Failure Report
+\end{algorithmic}
+\end{algorithm}
+\textbf{Key design:} cumulative context chain --- each agent sees all prior agents' output, not just the raw code.
+\end{frame}
+
+\begin{frame}{Dataset-Agnostic Test Execution}
+Three benchmarks encode correctness differently:
+\begin{itemize}
+    \item \textbf{Tuple I/O} (QuixBugs) --- \texttt{[[inputs], expected]} applied to the function directly.
+    \item \textbf{Assert-based} (HumanEvalFix) --- a \texttt{check(candidate)} function runs as one pass/fail unit.
+    \item \textbf{Example I/O} (DebugBench) --- LeetCode-style \texttt{class Solution}, entry method invoked positionally.
+\end{itemize}
+\vspace{6pt}
+A \texttt{Problem} abstraction (\texttt{test\_style} tag) + \texttt{executor} dispatch lets \texttt{agents.py} / \texttt{coordinator.py} stay identical across benchmarks.
+\end{frame}
+
+\begin{frame}{Dual LLM Backend with Quota-Aware Rotation}
+\begin{itemize}
+    \item Common interface: \texttt{generate(prompt) -> str}, two implementations selected at runtime.
+    \item \textbf{Gemini backend} --- hosted API, rate limiting, exponential backoff.
+    \item \textbf{Local backend} --- Qwen2.5-Coder 7B Instruct via Ollama, on-device (Apple Silicon GPU), no API cost.
+    \item Free-tier Gemini quota can be exhausted mid-experiment (up to 12 calls/problem).
+    \item Client rotates across \textbf{4 API keys} on detecting quota exhaustion (not transient errors) --- verified to draw from independent quota pools.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Infrastructure Defects Found at Scale}
+\small
+\begin{itemize}
+    \item \textbf{Daemon-thread timeout leak:} original 5s timeout used a thread \texttt{join()} that never killed the thread --- masked at small scale, but genuine infinite loops on larger benchmarks left CPU-bound threads accumulating and stalling the host. \\ \textbf{Fix:} \texttt{SIGALRM}-based timeout, armed/disarmed per test.
+    \item \textbf{Unprotected exec path:} HumanEvalFix's \texttt{check()} executes \emph{at module scope inside} \texttt{exec()}, outside the timeout wrapper --- a genuine infinite loop hung with no protection. \\ \textbf{Fix:} move the whole \texttt{exec()} call inside the timeout window.
+    \item \textbf{Signal-in-thread bug:} a background-thread watchdog made every \texttt{signal.alarm} call raise \texttt{ValueError} (signals are main-thread-only), silently misreported as a 360s timeout. \\ \textbf{Fix:} keep the pipeline on the main thread; bound LLM calls via HTTP timeouts instead.
+\end{itemize}
+\end{frame}
+
+% =================================================================
+\section{Experimental Setup}
+% =================================================================
+
+\begin{frame}{Datasets}
+\begin{itemize}
+    \item \textbf{QuixBugs} --- 40 classic algorithm programs, 1 single-line bug each; 31 with JSON tests used.
+    \item \textbf{HumanEvalFix} --- 164 HumanEval solutions with an implanted bug + full assert-based test suite each.
+    \item \textbf{DebugBench} --- 4{,}253 LeetCode-derived problems (C++/Java/Python); we use a fixed-seed, category-stratified sample of 119 Python problems (syntax, reference, logic, multiple-error categories).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Evaluation Matrix \& Configuration}
+\textbf{3 datasets $\times$ 2 backends}, multi-agent vs.\ single-prompt baseline in each cell.
+\vspace{6pt}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\small
+\textbf{Metrics}
+\begin{itemize}
+    \item Repair Success Rate
+    \item Pass@1 / Pass@3
+    \item Mean Time to Recovery (MTTR)
+    \item Avg.\ Attempts
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+\small
+\textbf{Config}
+\begin{itemize}
+    \item Temperature 0.2, max 2048 tokens
+    \item Max 3 retry attempts / bug
+    \item 5s test-execution timeout
+    \item Apple M5 Pro, 24GB unified memory
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+% =================================================================
+\section{Results}
+% =================================================================
+
+\begin{frame}{QuixBugs / Gemini --- Overall Results}
+\begin{table}
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Multi-Agent} & \textbf{Baseline} \\
+\midrule
+Bugs Fixed & 24/31 & 23/31 \\
+Success Rate & \textbf{77.4\%} & 74.2\% \\
+Pass@1 & 74.2\% & 74.2\% \\
+Avg.\ MTTR (s) & 81.1 & 5.6 \\
+Total API Calls & $\sim$140 & 31 \\
+\bottomrule
+\end{tabular}
+\end{table}
+Multi-agent leads by \textbf{+3.2 points}; the retry loop recovers \texttt{levenshtein} on attempt 2 after attempt 1 fails --- baseline has no such mechanism.
+\end{frame}
+
+\begin{frame}{Error-Type Breakdown (QuixBugs / Gemini)}
+\begin{table}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Error Type} & \textbf{Bugs} & \textbf{Fixed} & \textbf{Rate} \\
+\midrule
+WrongOutput & 21 & 16 & 76.2\% \\
+RuntimeError & 3 & 3 & 100.0\% \\
+IndexError & 3 & 3 & 100.0\% \\
+InfiniteLoop & 2 & 1 & 50.0\% \\
+ValueError & 1 & 1 & 100.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+Clear-error-message bugs (Runtime/Index/Value) $\to$ 100\%. InfiniteLoop bugs are hardest --- require reasoning about loop termination.
+\end{frame}
+
+\begin{frame}{Comparison with Published QuixBugs Results}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Type} & \textbf{Bugs Fixed} \\
+\midrule
+GenProg & Search-based APR & 4/40 \\
+TBar & Template-based APR & 14/40 \\
+CoCoNuT & Neural MT & 19/40 \\
+ChatGPT & Single-prompt LLM & 31/40 \\
+Baseline (Ours) & Single-prompt LLM & 23/31 \\
+\textbf{Multi-Agent (Ours)} & \textbf{Agentic LLM} & \textbf{24/31} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{Case Study: \texttt{bitcount}}
+\begin{columns}
+\begin{column}{0.48\textwidth}
+\small
+\texttt{n \^{}= n - 1  \# bug: should be \&=}\\[4pt]
+\textbf{1. Detection:} all 5 tests time out $\to$ \texttt{InfiniteLoop}\\
+\textbf{2. Localization:} line 4 flagged\\
+\textbf{3. Debugging:} XOR creates a bitmask, not a bit-clear $\to$ loop never terminates
+\end{column}
+\begin{column}{0.48\textwidth}
+\small
+\textbf{4. Patch Gen:} \texttt{n \&= n - 1}\\
+\textbf{5. Apply:} compiles cleanly\\
+\textbf{6. Validate:} all 5 tests pass\\[4pt]
+\textbf{Result:} fixed on attempt 1, 55.1s.
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{HumanEvalFix Results (164 problems)}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Backend} & \textbf{System} & \textbf{Fixed} & \textbf{Rate} & \textbf{Pass@1} \\
+\midrule
+\multirow{2}{*}{Gemini} & Multi-Agent & 112/164 & \textbf{68.3\%} & 62.8\% \\
+ & Baseline & 109/164 & 66.5\% & 66.5\% \\
+\multirow{2}{*}{Local (Qwen 7B)} & Multi-Agent & 89/164 & \textbf{54.3\%} & 42.7\% \\
+ & Baseline & 87/164 & 53.0\% & 53.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+Multi-agent leads on \emph{both} backends (+1.8 / +1.3 pts). Pass@1 $\ll$ final rate $\Rightarrow$ retry loop doing real work here.
+\end{frame}
+
+\begin{frame}{DebugBench Results --- Where Baseline Wins}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Backend} & \textbf{System} & \textbf{Fixed} & \textbf{Rate} & \textbf{Pass@1} \\
+\midrule
+\multirow{2}{*}{Gemini} & Multi-Agent & 93/119 & 78.2\% & 73.9\% \\
+ & Baseline & \textbf{112/119} & \textbf{94.1\%} & 94.1\% \\
+\multirow{2}{*}{Local (Qwen 7B)} & Multi-Agent & 70/119 & 58.8\% & 49.6\% \\
+ & Baseline & 70/119 & 58.8\% & 58.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+\small
+Diagnosed confound: 9/26 multi-agent failures show quota-rotation noise in the log. Corrected estimate: \textbf{84.5\%} (gap narrows from 15.9 to $\sim$9.6 pts, doesn't vanish). DebugBench's bugs are small \& mechanical --- extra reasoning rounds tend to \emph{overturn} an already-correct first read.
+\end{frame}
+
+\begin{frame}{QuixBugs on the Local Backend}
+\begin{table}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{System} & \textbf{Fixed} & \textbf{Rate} & \textbf{Pass@1} & \textbf{Avg.\ Time} \\
+\midrule
+Multi-Agent & 16/31 & 51.6\% & 35.5\% & 38.5s \\
+Baseline & 18/31 & \textbf{58.1\%} & 58.1\% & 2.1s \\
+\bottomrule
+\end{tabular}
+\end{table}
+Baseline wins by 6.5 pts --- the \emph{opposite} direction from the Gemini result on the same benchmark. Weaker model's first-pass reasoning gets worse, not better, with more scaffolding context.
+\end{frame}
+
+\begin{frame}{Cross-Backend Synthesis}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Local MA} & \textbf{Gemini MA} & \textbf{Local Base} & \textbf{Gemini Base} \\
+\midrule
+QuixBugs & 51.6\% & \textbf{77.4\%} & 58.1\% & 74.2\% \\
+HumanEvalFix & 54.3\% & \textbf{68.3\%} & 53.0\% & 66.5\% \\
+DebugBench & 58.8\% & 78.2\% & 58.8\% & \textbf{94.1\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{block}{Central Finding}
+Multi-agent's benefit over baseline is \textbf{jointly conditional} on backend capability \emph{and} bug structure --- not a fixed property of the architecture. Stronger backend $\Rightarrow$ higher absolute performance for both systems, but \emph{not} a uniformly wider multi-agent lead.
+\end{block}
+\end{frame}
+
+% =================================================================
+\section{Discussion}
+% =================================================================
+
+\begin{frame}{When Multi-Agent Helps}
+\begin{itemize}
+    \item \textbf{Structured reasoning:} targeted fixes when the root cause isn't obvious from the buggy code alone (e.g.\ \texttt{bitcount}).
+    \item \textbf{Iterative refinement:} retry-with-feedback recovers failed attempts (\texttt{levenshtein}; HumanEvalFix Pass@1 gap).
+    \item \textbf{Modularity:} swapped Gemini $\leftrightarrow$ local Qwen with zero changes to agent logic or prompts.
+    \item \textbf{Transparency:} interpretable log (classify $\to$ localize $\to$ diagnose $\to$ fix) aids trust and failure analysis.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{When It Doesn't}
+\begin{itemize}
+    \item \textbf{Error propagation with a weaker model:} on the local backend, multi-agent's Pass@1 trails baseline on \emph{every} benchmark --- a wrong intermediate diagnosis misleads downstream patch generation.
+    \item \textbf{Unproductive re-litigation on mechanical bugs:} on DebugBench, extra reasoning rounds more often \emph{overturn} a correct first read than improve it (baseline: 94.1\% single-shot).
+\end{itemize}
+\vspace{6pt}
+\textbf{Time--accuracy tradeoff:} multi-agent is 5--20$\times$ slower per problem; justified only where it's actually more accurate (QuixBugs/Gemini, HumanEvalFix). Unfavorable on both axes for DebugBench and the local backend.
+\end{frame}
+
+\begin{frame}{Limitations \& Threats to Validity}
+\small
+\begin{itemize}
+    \item Scope limited to isolated, single-function/algorithmic bugs --- not multi-file, repo-scale changes.
+    \item Recovery quality depends on test-case coverage/quality.
+    \item DebugBench judged only against 1--3 public examples (no hidden suite); canonical solutions pass at 86\% --- an approximate fidelity ceiling.
+    \item DebugBench/Gemini result confounded by quota-rotation noise (raw vs.\ corrected reported).
+    \item Single run per cell (no repeated-seed averaging); LLM outputs are non-deterministic even at low temperature.
+    \item DebugBench evaluated on a stratified sample (119/1{,}246), not the full pool.
+\end{itemize}
+\end{frame}
+
+% =================================================================
+\section{Conclusion}
+% =================================================================
+
+\begin{frame}{Conclusion}
+\begin{itemize}
+    \item Multi-agent recovery beats single-prompt baseline on QuixBugs/Gemini (77.4\% vs.\ 74.2\%) and HumanEvalFix (both backends).
+    \item Baseline matches or beats multi-agent on the weaker local backend (all 3 benchmarks) and on DebugBench/Gemini (94.1\% vs.\ 78.2\%, $\sim$84.5\% corrected).
+    \item \textbf{Central conclusion:} the architecture's value is \emph{jointly conditional} on backend capability and bug structure --- not a universal win or loss.
+    \item Three infrastructure defects found only via multi-hour unattended runs, diagnosed and fixed --- of independent methodological value.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Future Work}
+\begin{itemize}
+    \item Extend to more languages (Java, C++, JS) --- all three benchmarks already provide parallel data.
+    \item Re-run DebugBench/Gemini under a paid tier / more keys to eliminate quota-noise confound.
+    \item Evaluate a wider range of backend capabilities (mid-sized open models).
+    \item Extend to repository-scale benchmarks: Defects4J, BugsInPy, SWE-bench.
+    \item Adaptive controller: route a bug to multi-agent or single-prompt based on a cheap complexity estimate.
+    \item Real CI/CD integration (e.g., GitHub Actions); debate/consensus agent patterns; static-analysis-assisted localization.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\centering
+\Huge Thank You
+\vspace{12pt}
+
+\normalsize Questions?
+\end{frame}
+
+\end{document}

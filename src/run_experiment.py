@@ -1,107 +1,68 @@
 """
 Main experiment runner.
-Runs the multi-agent recovery system on all QuixBugs programs with JSON test cases.
+Runs the multi-agent recovery system on a dataset (QuixBugs, HumanEvalFix, or DebugBench).
 
 Usage:
     cd src
-    python run_experiment.py
+    python run_experiment.py --dataset quixbugs
+    python run_experiment.py --dataset humanevalfix
+    python run_experiment.py --dataset debugbench --limit 10   # pilot run
 """
 
 import os
-import sys
 import json
 import csv
-import time
+import argparse
 
-from config import DATASET_DIR, RESULTS_DIR
-from gemini_client import GeminiClient
+from config import RESULTS_DIR, LLM_BACKEND
+from llm_factory import get_llm_client
 from coordinator import RecoveryCoordinator
+import executor
 
 
-def load_programs():
-    """Load all QuixBugs programs that have JSON test cases."""
-    programs = []
-
-    json_dir = os.path.join(DATASET_DIR, "json_testcases")
-    buggy_dir = os.path.join(DATASET_DIR, "python_programs")
-
-    for json_file in sorted(os.listdir(json_dir)):
-        if not json_file.endswith(".json"):
-            continue
-
-        program_name = json_file.replace(".json", "")
-        buggy_file = os.path.join(buggy_dir, f"{program_name}.py")
-
-        if not os.path.exists(buggy_file):
-            print(f"[Skip] {program_name}: no buggy file found")
-            continue
-
-        # Load buggy code
-        with open(buggy_file, "r") as f:
-            buggy_code = f.read()
-
-        # Extract just the function (before the docstring/comments)
-        code_lines = []
-        for line in buggy_code.split("\n"):
-            if line.startswith('"""') or line.startswith("'''"):
-                break
-            code_lines.append(line)
-        buggy_code_clean = "\n".join(code_lines).strip()
-
-        # Load test cases
-        with open(os.path.join(json_dir, json_file), "r") as f:
-            content = f.read().strip()
-
-        # Each line in the JSON file is a test case: [[inputs], expected_output]
-        test_cases = []
-        for line in content.split("\n"):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                tc = json.loads(line)
-                # tc is [[input1, input2, ...], expected_output]
-                if isinstance(tc, list) and len(tc) == 2:
-                    inputs = tc[0] if isinstance(tc[0], list) else [tc[0]]
-                    expected = tc[1]
-                    test_cases.append([inputs, expected])
-            except json.JSONDecodeError:
-                continue
-
-        if not test_cases:
-            print(f"[Skip] {program_name}: no valid test cases")
-            continue
-
-        programs.append({
-            "name": program_name,
-            "buggy_code": buggy_code_clean,
-            "test_cases": test_cases,
-        })
-
-    return programs
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", choices=["quixbugs", "humanevalfix", "debugbench"], default="quixbugs")
+    parser.add_argument("--language", choices=["python", "java", "cpp", "javascript"], default="python",
+                         help="Only humanevalfix currently supports non-python languages")
+    parser.add_argument("--limit", type=int, default=None, help="Only run the first N problems (pilot runs)")
+    return parser.parse_args()
 
 
-def run_experiment():
-    """Run the multi-agent recovery system on all programs."""
+def load_problems(dataset, language="python"):
+    if dataset == "quixbugs":
+        import load_quixbugs
+        return load_quixbugs.load_problems()
+    elif dataset == "humanevalfix":
+        import load_humanevalfix
+        return load_humanevalfix.load_problems(language)
+    elif dataset == "debugbench":
+        import load_debugbench
+        return load_debugbench.load_problems()
+    raise ValueError(f"Unknown dataset: {dataset}")
+
+
+def run_experiment(dataset, limit=None, language="python"):
     print("=" * 60)
-    print("FAILURE RECOVERY SYSTEM - Multi-Agent Experiment")
+    print(f"FAILURE RECOVERY SYSTEM - Multi-Agent Experiment ({dataset}, {language}, backend={LLM_BACKEND})")
     print("=" * 60)
 
-    # Load programs
-    programs = load_programs()
-    print(f"\nLoaded {len(programs)} programs with test cases.\n")
+    problems = load_problems(dataset, language)
+    if limit:
+        problems = problems[:limit]
+    print(f"\nLoaded {len(problems)} problems.\n")
 
-    # Initialize
-    llm = GeminiClient()
+    llm = get_llm_client()
     coordinator = RecoveryCoordinator(llm)
 
-    # Results storage — load any previous partial results
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    csv_path = os.path.join(RESULTS_DIR, "results.csv")
-    json_path = os.path.join(RESULTS_DIR, "results_detailed.json")
+    # Distinct filenames per dataset+backend — never collides with the original
+    # Gemini/QuixBugs results.csv / baseline_results.csv already cited in the paper.
+    stem = f"{dataset}_{LLM_BACKEND}" if language == "python" else f"{dataset}_{language}_{LLM_BACKEND}"
+    csv_path = os.path.join(RESULTS_DIR, f"{stem}_results.csv")
+    json_path = os.path.join(RESULTS_DIR, f"{stem}_results_detailed.json")
     fieldnames = ["program", "success", "attempts", "time_seconds", "error_type"]
 
-    # Check which programs were already completed (resume support)
     completed = set()
     results = []
     if os.path.exists(csv_path):
@@ -110,22 +71,24 @@ def run_experiment():
             for row in reader:
                 completed.add(row["program"])
                 results.append(row)
-        print(f"\nResuming: {len(completed)} programs already completed, skipping them.")
+        print(f"\nResuming: {len(completed)} problems already completed, skipping them.")
 
     total_success = sum(1 for r in results if r.get("success") == "True" or r.get("success") is True)
 
-    # Run on each program
-    for i, prog in enumerate(programs):
-        # Skip already completed programs (resume support)
-        if prog["name"] in completed:
-            print(f"\n[{i+1}/{len(programs)}] {prog['name']} — SKIPPED (already done)")
+    for i, prob in enumerate(problems):
+        if prob.name in completed:
+            print(f"\n[{i+1}/{len(problems)}] {prob.name} — SKIPPED (already done)")
             continue
 
-        print(f"\n[{i+1}/{len(programs)}] {prog['name']}")
+        print(f"\n[{i+1}/{len(problems)}] {prob.name}")
+        # NOTE: coordinator.recover() must run on the main thread — its agents call
+        # executor.run_with_timeout(), which uses signal.alarm() and only works there.
+        # Each LLM call is already bounded by LocalClient's (connect, read) timeout,
+        # and each test execution by EXEC_TIMEOUT, so no outer watchdog is needed here.
         result = coordinator.recover(
-            program_name=prog["name"],
-            buggy_code=prog["buggy_code"],
-            test_cases=prog["test_cases"],
+            program_name=prob.name,
+            buggy_code=prob.buggy_code,
+            problem=prob,
         )
 
         if result["success"]:
@@ -133,7 +96,6 @@ def run_experiment():
 
         print(f"  Running total: {total_success}/{i+1} fixed")
 
-        # Save after EACH bug (never lose progress)
         row = {
             "program": result["program"],
             "success": result["success"],
@@ -143,7 +105,6 @@ def run_experiment():
         }
         results.append(row)
 
-        # Append to CSV
         write_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
         with open(csv_path, "a", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -151,8 +112,6 @@ def run_experiment():
                 writer.writeheader()
             writer.writerow(row)
 
-        # Save full detailed JSON (overwrite each time)
-        # Load existing detailed results
         detailed = []
         if os.path.exists(json_path):
             try:
@@ -164,16 +123,18 @@ def run_experiment():
         with open(json_path, "w") as f:
             json.dump(detailed, f, indent=2, default=str)
 
-    # Print summary
     print("\n" + "=" * 60)
     print("EXPERIMENT SUMMARY")
     print("=" * 60)
-    print(f"Total programs: {len(results)}")
+    print(f"Dataset: {dataset} | Backend: {LLM_BACKEND}")
+    print(f"Total problems: {len(results)}")
     print(f"Successfully fixed: {total_success}")
-    print(f"Success rate: {total_success/len(results)*100:.1f}%")
+    if results:
+        print(f"Success rate: {total_success/len(results)*100:.1f}%")
 
     pass_at_1 = sum(1 for r in results if str(r["success"]) == "True" and str(r["attempts"]) == "1")
-    print(f"Pass@1: {pass_at_1}/{len(results)} ({pass_at_1/len(results)*100:.1f}%)")
+    if results:
+        print(f"Pass@1: {pass_at_1}/{len(results)} ({pass_at_1/len(results)*100:.1f}%)")
 
     fixed = [r for r in results if str(r["success"]) == "True"]
     if fixed:
@@ -182,10 +143,11 @@ def run_experiment():
         print(f"Avg time (fixed bugs): {avg_time:.1f}s")
         print(f"Avg attempts (fixed bugs): {avg_attempts:.1f}")
 
-    print(f"\nTotal API calls: {llm.total_calls}")
+    print(f"\nTotal LLM calls: {llm.total_calls}")
     print(f"Results saved to: {csv_path}")
     print(f"Detailed log saved to: {json_path}")
 
 
 if __name__ == "__main__":
-    run_experiment()
+    args = parse_args()
+    run_experiment(args.dataset, args.limit, args.language)

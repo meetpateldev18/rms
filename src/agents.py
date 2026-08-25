@@ -1,57 +1,19 @@
 import json
-import sys
-import io
-import threading
-from gemini_client import GeminiClient
+import executor
 
-EXEC_TIMEOUT = 5  # seconds — kill any test that takes longer than this
-
-
-def _run_with_timeout(func, args, timeout=EXEC_TIMEOUT):
-    """Run a function with a timeout. Returns (result, error)."""
-    result = [None]
-    error = [None]
-
-    def target():
-        try:
-            r = func(*args)
-            if hasattr(r, '__next__'):
-                r = list(r)
-            result[0] = r
-        except Exception as e:
-            error[0] = e
-
-    t = threading.Thread(target=target)
-    t.daemon = True
-    t.start()
-    t.join(timeout)
-
-    if t.is_alive():
-        return None, TimeoutError(f"Execution timed out after {timeout}s (likely infinite loop)")
-    return result[0], error[0]
+# Per-language display name, code-fence marker, and the term for "the line
+# that starts the function/method" — used to keep prompts language-aware
+# without duplicating each agent's prompt text per language.
+_LANG_INFO = {
+    "python": {"name": "Python", "fence": "python", "def_line": "the def line"},
+    "java": {"name": "Java", "fence": "java", "def_line": "the method signature"},
+    "cpp": {"name": "C++", "fence": "cpp", "def_line": "the function signature"},
+    "javascript": {"name": "JavaScript", "fence": "javascript", "def_line": "the function declaration"},
+}
 
 
-def _extract_func(code):
-    """Execute code and extract the first callable function."""
-    namespace = {}
-    exec(code, namespace)
-    for name, obj in namespace.items():
-        if callable(obj) and not name.startswith("_"):
-            return obj
-    return None
-
-
-def _run_tests_quick(func, test_cases, limit=5):
-    """Run test cases against a function. Returns list of error strings."""
-    errors = []
-    for i, tc in enumerate(test_cases[:limit]):
-        inputs, expected = tc
-        actual, exc = _run_with_timeout(func, inputs)
-        if exc is not None:
-            errors.append(f"Test {i+1}: {type(exc).__name__}: {exc}")
-        elif actual != expected:
-            errors.append(f"Test {i+1}: returned {repr(actual)}, expected {repr(expected)}")
-    return errors
+def _lang(language: str) -> dict:
+    return _LANG_INFO.get(language, _LANG_INFO["python"])
 
 
 def _parse_json_response(response: str) -> dict:
@@ -68,43 +30,25 @@ def _parse_json_response(response: str) -> dict:
 class FailureDetectionAgent:
     """Analyzes test failures and classifies the error type using LLM."""
 
-    def __init__(self, llm: GeminiClient):
+    def __init__(self, llm):
         self.llm = llm
 
-    def run(self, program_name: str, buggy_code: str, test_cases: list) -> dict:
+    def run(self, program_name: str, buggy_code: str, problem) -> dict:
         print(f"\n[Agent 1: FailureDetection] Analyzing failure...")
 
-        # First, run tests in Python to get raw error output
-        test_output = []
-        try:
-            func = _extract_func(buggy_code)
-            if func is None:
-                test_output.append("ERROR: No callable function found in code")
-            else:
-                for i, tc in enumerate(test_cases[:5]):
-                    inputs, expected = tc
-                    actual, exc = _run_with_timeout(func, inputs)
-                    if exc is not None:
-                        test_output.append(f"Test {i+1}: {type(exc).__name__}: {exc}")
-                        print(f"[Agent 1]   ERROR — Test {i+1}: {type(exc).__name__}: {exc}")
-                    elif actual != expected:
-                        test_output.append(f"Test {i+1}: {program_name}({', '.join(map(repr, inputs))}) returned {repr(actual)}, expected {repr(expected)}")
-                        print(f"[Agent 1]   FAIL — Test {i+1}: got {repr(actual)}, expected {repr(expected)}")
-                    else:
-                        print(f"[Agent 1]   PASS — Test {i+1}")
-        except SyntaxError as e:
-            test_output.append(f"SyntaxError: {e}")
-            print(f"[Agent 1]   SyntaxError: {e}")
+        lang = _lang(getattr(problem, "language", "python"))
 
-        test_output_str = "\n".join(test_output) if test_output else "Unknown failure"
+        # First, run the tests to get raw error output
+        test_output_str = executor.get_failure_output(problem, buggy_code, limit=5)
+        print(f"[Agent 1]   {test_output_str[:300]}")
 
         # Now ask LLM to classify the failure
-        prompt = f"""You are a failure detection agent. Analyze the following buggy Python function and its test failures.
+        prompt = f"""You are a failure detection agent. Analyze the following buggy {lang['name']} function and its test failures.
 
 Function name: {program_name}
 
 Buggy code:
-```python
+```{lang['fence']}
 {buggy_code}
 ```
 
@@ -141,18 +85,19 @@ Classify this failure. Respond in this exact JSON format (no markdown, no code b
 class CodeLocalizationAgent:
     """Identifies the exact faulty line in the code using LLM."""
 
-    def __init__(self, llm: GeminiClient):
+    def __init__(self, llm):
         self.llm = llm
 
-    def run(self, program_name: str, buggy_code: str, failure_info: dict) -> dict:
-        print(f"\n[Agent 2: CodeLocalization] Localizing fault...")
+    def run(self, program_name: str, buggy_code: str, failure_info: dict, language: str = "python") -> dict:
+        print(f"\n[Agent 2: CodeLocalization] Localizing fault(s)...")
+        lang = _lang(language)
 
         # Number the lines for the LLM
         numbered_code = ""
         for i, line in enumerate(buggy_code.strip().split("\n"), 1):
             numbered_code += f"  {i}: {line}\n"
 
-        prompt = f"""You are a code localization agent. Given a buggy Python function and failure analysis, identify the EXACT faulty line.
+        prompt = f"""You are a code localization agent. Given a buggy {lang['name']} function and failure analysis, identify EVERY faulty line — there may be ONE bug or SEVERAL independent bugs in this code. Do not stop at the first one you find; keep reading the whole function.
 
 Function: {program_name}
 
@@ -165,25 +110,48 @@ Failure analysis:
 - Key observation: {failure_info.get('key_observation', 'Unknown')}
 - Test output: {failure_info.get('test_output', 'Unknown')[:300]}
 
-Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
-{{"faulty_line_number": <int>, "faulty_line_content": "the exact line of code that is buggy", "reason": "why this line is incorrect"}}"""
+Respond in this exact JSON format (no markdown, no code blocks, just raw JSON). List every faulty line you find as a separate entry in "faulty_lines" — one entry if there's only one bug, multiple entries if there are multiple independent bugs:
+{{"faulty_lines": [{{"line_number": <int>, "line_content": "the exact line of code that is buggy", "reason": "why this line is incorrect"}}]}}"""
 
-        print(f"[Agent 2] Asking LLM to localize fault...")
+        print(f"[Agent 2] Asking LLM to localize fault(s)...")
         response = self.llm.generate(prompt)
         print(f"[Agent 2] LLM response: {response[:200]}")
 
         try:
             parsed = _parse_json_response(response)
-            print(f"[Agent 2] Faulty line #{parsed.get('faulty_line_number', '?')}: {parsed.get('faulty_line_content', '?')}")
-            print(f"[Agent 2] Reason: {parsed.get('reason', '?')[:100]}")
+            faulty_lines = self._normalize(parsed)
+            parsed["faulty_lines"] = faulty_lines
+            print(f"[Agent 2] Found {len(faulty_lines)} faulty line(s):")
+            for fl in faulty_lines:
+                print(f"[Agent 2]   Line #{fl.get('line_number', '?')}: {fl.get('line_content', '?')} — {fl.get('reason', '?')[:80]}")
             return parsed
         except (json.JSONDecodeError, IndexError):
             print(f"[Agent 2] JSON parse failed, returning raw response")
             return {
-                "faulty_line_number": -1,
-                "faulty_line_content": "unknown",
-                "reason": response[:200],
+                "faulty_lines": [{"line_number": -1, "line_content": "unknown", "reason": response[:200]}],
             }
+
+    @staticmethod
+    def _normalize(parsed: dict) -> list:
+        """Accept either the new {"faulty_lines": [...]} shape or the old
+        single-line {"faulty_line_number", "faulty_line_content", "reason"}
+        shape, always returning a list of {"line_number", "line_content", "reason"}."""
+        if isinstance(parsed.get("faulty_lines"), list) and parsed["faulty_lines"]:
+            lines = []
+            for fl in parsed["faulty_lines"]:
+                lines.append({
+                    "line_number": fl.get("line_number", fl.get("faulty_line_number", -1)),
+                    "line_content": fl.get("line_content", fl.get("faulty_line_content", "unknown")),
+                    "reason": fl.get("reason", "unknown"),
+                })
+            return lines
+        if "faulty_line_number" in parsed or "faulty_line_content" in parsed:
+            return [{
+                "line_number": parsed.get("faulty_line_number", -1),
+                "line_content": parsed.get("faulty_line_content", "unknown"),
+                "reason": parsed.get("reason", "unknown"),
+            }]
+        return [{"line_number": -1, "line_content": "unknown", "reason": "no faulty line identified"}]
 
 
 # ============================================================
@@ -192,28 +160,35 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 class DebuggingAgent:
     """Analyzes root cause and proposes a fix strategy using LLM."""
 
-    def __init__(self, llm: GeminiClient):
+    def __init__(self, llm):
         self.llm = llm
 
-    def run(self, program_name: str, buggy_code: str, failure_info: dict, localization_info: dict, prev_patch: str = None) -> dict:
-        print(f"\n[Agent 3: Debugging] Analyzing root cause...")
+    def run(self, program_name: str, buggy_code: str, failure_info: dict, localization_info: dict, prev_patch: str = None, language: str = "python") -> dict:
+        print(f"\n[Agent 3: Debugging] Analyzing root cause(s)...")
+        lang = _lang(language)
 
         retry_context = ""
         if prev_patch:
             retry_context = f"""
 
 IMPORTANT: A previous fix attempt FAILED. The previous patch was:
-```python
+```{lang['fence']}
 {prev_patch}
 ```
-That did NOT work. Propose a DIFFERENT fix strategy."""
+That did NOT work — either it missed a bug entirely, or introduced a new problem. Re-examine the whole function for ANY remaining issue, not just the one you focused on last time."""
 
-        prompt = f"""You are a debugging agent. Analyze the root cause of the bug and propose a fix.
+        faulty_lines = localization_info.get("faulty_lines", [])
+        localization_str = "\n".join(
+            f"- Line {fl.get('line_number', '?')}: {fl.get('line_content', 'unknown')} — {fl.get('reason', 'unknown')}"
+            for fl in faulty_lines
+        ) or "- unknown"
+
+        prompt = f"""You are a debugging agent. Analyze the root cause of EACH bug identified below and propose a fix for each. There may be one bug or several independent bugs — address all of them.
 
 Function: {program_name}
 
 Buggy code:
-```python
+```{lang['fence']}
 {buggy_code}
 ```
 
@@ -221,13 +196,12 @@ Failure analysis:
 - Error type: {failure_info.get('error_type', 'Unknown')}
 - Description: {failure_info.get('description', 'Unknown')}
 
-Fault localization:
-- Faulty line: {localization_info.get('faulty_line_content', 'unknown')}
-- Reason: {localization_info.get('reason', 'unknown')}
+Fault localization ({len(faulty_lines)} faulty line(s) identified):
+{localization_str}
 {retry_context}
 
-Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
-{{"root_cause": "detailed explanation of why the bug occurs", "fix_strategy": "what needs to change and why", "old_code": "the exact buggy expression or line", "new_code": "the exact corrected expression or line"}}"""
+Respond in this exact JSON format (no markdown, no code blocks, just raw JSON). Include one entry per bug in "fixes":
+{{"fixes": [{{"root_cause": "why this specific bug occurs", "old_code": "the exact buggy expression or line", "new_code": "the exact corrected expression or line"}}], "fix_strategy": "overall summary of what needs to change and why"}}"""
 
         print(f"[Agent 3] Asking LLM for root cause analysis...")
         response = self.llm.generate(prompt)
@@ -235,17 +209,36 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 
         try:
             parsed = _parse_json_response(response)
-            print(f"[Agent 3] Root cause: {parsed.get('root_cause', '?')[:100]}")
-            print(f"[Agent 3] Fix: {parsed.get('old_code', '?')} → {parsed.get('new_code', '?')}")
+            fixes = self._normalize(parsed)
+            parsed["fixes"] = fixes
+            print(f"[Agent 3] {len(fixes)} fix(es) proposed:")
+            for fx in fixes:
+                print(f"[Agent 3]   {fx.get('old_code', '?')} → {fx.get('new_code', '?')} ({fx.get('root_cause', '?')[:80]})")
             return parsed
         except (json.JSONDecodeError, IndexError):
             print(f"[Agent 3] JSON parse failed, returning raw response")
             return {
-                "root_cause": response[:200],
+                "fixes": [{"root_cause": response[:200], "old_code": "unknown", "new_code": "unknown"}],
                 "fix_strategy": "unknown",
-                "old_code": "unknown",
-                "new_code": "unknown",
             }
+
+    @staticmethod
+    def _normalize(parsed: dict) -> list:
+        """Accept either the new {"fixes": [...]} shape or the old single-fix
+        {"root_cause", "old_code", "new_code"} shape, always returning a list."""
+        if isinstance(parsed.get("fixes"), list) and parsed["fixes"]:
+            return [{
+                "root_cause": fx.get("root_cause", "unknown"),
+                "old_code": fx.get("old_code", "unknown"),
+                "new_code": fx.get("new_code", "unknown"),
+            } for fx in parsed["fixes"]]
+        if "old_code" in parsed or "root_cause" in parsed:
+            return [{
+                "root_cause": parsed.get("root_cause", "unknown"),
+                "old_code": parsed.get("old_code", "unknown"),
+                "new_code": parsed.get("new_code", "unknown"),
+            }]
+        return [{"root_cause": "unknown", "old_code": "unknown", "new_code": "unknown"}]
 
 
 # ============================================================
@@ -254,30 +247,41 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 class PatchGenerationAgent:
     """Generates the complete corrected function using LLM."""
 
-    def __init__(self, llm: GeminiClient):
+    def __init__(self, llm):
         self.llm = llm
 
-    def run(self, program_name: str, buggy_code: str, debugging_info: dict) -> dict:
-        print(f"\n[Agent 4: PatchGeneration] Generating corrected code...")
+    def run(self, program_name: str, buggy_code: str, debugging_info: dict, language: str = "python") -> dict:
+        lang = _lang(language)
+        fixes = debugging_info.get("fixes") or [{
+            "root_cause": debugging_info.get("root_cause", "unknown"),
+            "old_code": debugging_info.get("old_code", "unknown"),
+            "new_code": debugging_info.get("new_code", "unknown"),
+        }]
+        print(f"\n[Agent 4: PatchGeneration] Generating corrected code ({len(fixes)} fix(es) to apply)...")
 
-        prompt = f"""You are a patch generation agent. Generate the COMPLETE corrected Python function.
+        fixes_str = "\n".join(
+            f"{i+1}. {fx.get('old_code', '?')} → {fx.get('new_code', '?')} ({fx.get('root_cause', '?')})"
+            for i, fx in enumerate(fixes)
+        )
+
+        prompt = f"""You are a patch generation agent. Generate the COMPLETE corrected {lang['name']} function, applying EVERY fix listed below — do not apply only one if several are listed.
 
 Function: {program_name}
 
 Buggy code:
-```python
+```{lang['fence']}
 {buggy_code}
 ```
 
 Debugging analysis:
-- Root cause: {debugging_info.get('root_cause', 'unknown')}
 - Fix strategy: {debugging_info.get('fix_strategy', 'unknown')}
-- Change: {debugging_info.get('old_code', '?')} → {debugging_info.get('new_code', '?')}
+- Fixes to apply ({len(fixes)} total):
+{fixes_str}
 
 Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
-{{"corrected_code": "the COMPLETE corrected function", "changes_made": "brief summary of what was changed"}}
+{{"corrected_code": "the COMPLETE corrected function with ALL fixes applied", "changes_made": "brief summary of everything that was changed"}}
 
-IMPORTANT: In corrected_code, use \\n for newlines. Return the COMPLETE function including the def line, not just the fixed line."""
+IMPORTANT: In corrected_code, use \\n for newlines. Return the COMPLETE function including {lang['def_line']}, not just the fixed lines. Apply ALL listed fixes, not just the first one."""
 
         print(f"[Agent 4] Asking LLM to generate patch...")
         response = self.llm.generate(prompt)
@@ -323,12 +327,21 @@ IMPORTANT: In corrected_code, use \\n for newlines. Return the COMPLETE function
 class PatchApplicationAgent:
     """Applies the generated patch. Pure Python — no LLM needed."""
 
-    def run(self, original_code: str, patched_code: str) -> dict:
+    def run(self, original_code: str, patched_code: str, language: str = "python") -> dict:
         print(f"\n[Agent 5: PatchApplication] Applying patch...")
 
         if not patched_code or not patched_code.strip():
             print(f"[Agent 5] ERROR: Empty patch")
             return {"success": False, "applied_code": original_code, "error": "Empty patch"}
+
+        if language != "python":
+            # Other languages compile via their own toolchain (javac/g++) inside
+            # executor.run_tests — Python's compile() can't check their syntax,
+            # and a false-positive rejection here would silently discard valid
+            # patches before Agent 6 ever gets to run them.
+            print(f"[Agent 5] Non-Python language ({language}) — compile check deferred to Validation")
+            print(f"[Agent 5] Applied {len(patched_code)} chars of patched code")
+            return {"success": True, "applied_code": patched_code, "error": None}
 
         # Verify patched code compiles
         try:
@@ -347,63 +360,14 @@ class PatchApplicationAgent:
 class ValidationAgent:
     """Validates patched code against test cases. Pure Python — no LLM needed."""
 
-    def run(self, program_name: str, patched_code: str, test_cases: list) -> dict:
-        results = {
-            "all_passed": False,
-            "total_tests": len(test_cases),
-            "passed": 0,
-            "failed": 0,
-            "errors": [],
-        }
+    def run(self, program_name: str, patched_code: str, problem) -> dict:
+        print(f"\n[Agent 6: Validation] Running {problem.num_tests()} test(s) on patched code...")
 
-        print(f"\n[Agent 6: Validation] Running {len(test_cases)} tests on patched code...")
+        results = executor.run_tests(problem, patched_code)
 
-        # Check if code compiles
-        try:
-            compile(patched_code, "<patch>", "exec")
-        except SyntaxError as e:
-            print(f"[Agent 6] SYNTAX ERROR in patch: {e}")
-            results["failed"] = results["total_tests"]
-            results["errors"].append(f"SyntaxError: {e}")
-            return results
+        for err in results["errors"]:
+            print(f"[Agent 6]   FAIL — {err}")
 
-        # Get function
-        try:
-            func = _extract_func(patched_code)
-        except Exception as e:
-            print(f"[Agent 6] ERROR executing patch: {e}")
-            results["failed"] = results["total_tests"]
-            results["errors"].append(f"ExecError: {e}")
-            return results
-
-        if func is None:
-            print(f"[Agent 6] No callable function found in patched code")
-            results["failed"] = results["total_tests"]
-            results["errors"].append("No callable function found")
-            return results
-
-        # Run all tests
-        for i, test_case in enumerate(test_cases):
-            inputs = test_case[0]
-            expected = test_case[1]
-
-            actual, exc = _run_with_timeout(func, inputs)
-
-            if exc is not None:
-                results["failed"] += 1
-                msg = f"Test {i+1}: {type(exc).__name__}: {exc}"
-                results["errors"].append(msg)
-                print(f"[Agent 6]   Test {i+1}: ERROR — {type(exc).__name__}: {exc}")
-            elif actual == expected:
-                results["passed"] += 1
-                print(f"[Agent 6]   Test {i+1}: PASS — {repr(inputs)} → {repr(actual)}")
-            else:
-                results["failed"] += 1
-                msg = f"Test {i+1}: Expected {expected}, got {actual}"
-                results["errors"].append(msg)
-                print(f"[Agent 6]   Test {i+1}: FAIL — expected {repr(expected)}, got {repr(actual)}")
-
-        results["all_passed"] = results["passed"] == results["total_tests"]
         status = "ALL PASSED" if results["all_passed"] else f"{results['passed']}/{results['total_tests']} passed"
         print(f"[Agent 6] Result: {status}")
         return results

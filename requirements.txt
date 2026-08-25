@@ -1,3 +1,5 @@
 google-genai
 matplotlib
 python-dotenv
+requests
+datasets

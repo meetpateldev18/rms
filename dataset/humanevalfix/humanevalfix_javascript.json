@@ -1,0 +1,1150 @@
+[
+  {
+    "name": "JavaScript_0",
+    "buggy_code": "\nconst hasCloseElements = (numbers, threshold) => {\n  for (let i = 0; i < numbers.length; i++) {\n    for (let j = 0; j < numbers.length; j++) {\n      if (i != j) {\n        let distance = numbers[i] - numbers[j];\n        if (distance < threshold) {\n          return true;\n        }\n      }\n    }\n  }\n  return false;\n}\n\n",
+    "test_code": "const testHasCloseElements = () => {\n  console.assert(hasCloseElements([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.3) === true)\n  console.assert(\n    hasCloseElements([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.05) === false\n  )\n  console.assert(hasCloseElements([1.0, 2.0, 5.9, 4.0, 5.0], 0.95) === true)\n  console.assert(hasCloseElements([1.0, 2.0, 5.9, 4.0, 5.0], 0.8) === false)\n  console.assert(hasCloseElements([1.0, 2.0, 3.0, 4.0, 5.0, 2.0], 0.1) === true)\n  console.assert(hasCloseElements([1.1, 2.2, 3.1, 4.1, 5.1], 1.0) === true)\n  console.assert(hasCloseElements([1.1, 2.2, 3.1, 4.1, 5.1], 0.5) === false)\n}\n\ntestHasCloseElements()\n",
+    "entry_point": "hasCloseElements",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_1",
+    "buggy_code": "\nconst separateParenGroups = (paren_string) => {\n  var result = [];\n  var current_string = [];\n  var current_depth = 0;\n\n  for (const c of paren_string) {\n    if (c == '(') {\n      current_depth += 1;\n      current_string.push(c);\n    } else if (c == ')') {\n      current_depth -= 1;\n      current_string.push(c);\n      if (current_depth < 0) {\n        result.push(current_string.join(''));\n        current_string = [];\n      }\n    }\n  }\n\n  return result;\n}\n\n",
+    "test_code": "const testSeparateParenGroups = () => {\n  console.assert(\n    JSON.stringify(separateParenGroups('(()()) ((())) () ((())()())')) ===\n      JSON.stringify(['(()())', '((()))', '()', '((())()())'])\n  )\n  console.assert(\n    JSON.stringify(separateParenGroups('() (()) ((())) (((())))')) ===\n      JSON.stringify(['()', '(())', '((()))', '(((())))'])\n  )\n  console.assert(\n    JSON.stringify(separateParenGroups('(()(())((())))')) ===\n      JSON.stringify(['(()(())((())))'])\n  )\n  console.assert(\n    JSON.stringify(separateParenGroups('( ) (( )) (( )( ))')) ===\n      JSON.stringify(['()', '(())', '(()())'])\n  )\n}\n\ntestSeparateParenGroups()\n",
+    "entry_point": "separateParenGroups",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_2",
+    "buggy_code": "\nconst truncateNumber = (number) => {\n  return number % 1.0 + 1.0;\n}\n\n",
+    "test_code": "const testTruncateNumber = () => {\n  console.assert(truncateNumber(3.5) === 0.5)\n\n  console.assert(Math.abs(truncateNumber(1.33) - 0.33) < 1e-6)\n\n  console.assert(Math.abs(truncateNumber(123.456 - 0.456) < 1e-6))\n}\n\ntestTruncateNumber()\n",
+    "entry_point": "truncateNumber",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_3",
+    "buggy_code": "\nconst belowZero = (operations) => {\n  var balance = 0;\n  for (const op of operations) {\n    balance += op;\n    if (balance == 0) {\n      return true;\n    }\n  }\n  return false;\n}\n\n",
+    "test_code": "const testBelowZero = () => {\n  console.assert(belowZero([]) === false)\n  console.assert(belowZero([1, 2, -3, 1, 2, -3]) === false)\n  console.assert(belowZero([1, 2, -4, 5, 6]) === true)\n  console.assert(belowZero([1, -1, 2, -2, 5, -5, 4, -4]) === false)\n  console.assert(belowZero([1, -1, 2, -2, 5, -5, 4, -5]) === true)\n  console.assert(belowZero([1, -2, 2, -2, 5, -5, 4, -4]) === true)\n}\n\ntestBelowZero()\n",
+    "entry_point": "belowZero",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_4",
+    "buggy_code": "\nconst meanAbsoluteDeviation = (numbers) => {\n  var mean = numbers.reduce((prev, item) => {\n    return prev + item;\n  }, 0) / numbers.length;\n  return numbers.reduce((prev, item) => {\n    return prev + Math.abs(item - mean);\n  }, 0) / mean;\n\n}\n\n",
+    "test_code": "const testMeanAbsoluteDeviation = () => {\n  console.assert(\n    Math.abs(meanAbsoluteDeviation([1.0, 2.0, 3.0]) - 2.0 / 3.0) < 1e-6\n  )\n  console.assert(\n    Math.abs(meanAbsoluteDeviation([1.0, 2.0, 3.0, 4.0]) - 1.0) < 1e-6\n  )\n  console.assert(\n    Math.abs(meanAbsoluteDeviation([1.0, 2.0, 3.0, 4.0, 5.0]) - 6.0 / 5.0) < 1e-6\n  )\n}\n\ntestMeanAbsoluteDeviation()\n",
+    "entry_point": "meanAbsoluteDeviation",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_5",
+    "buggy_code": "\nconst intersperse = (numbers, delimeter) => {\n  if (!Array.isArray(numbers) || numbers.length == 0)\n    return [];\n  var result = [];\n  for (const n of numbers) {\n    result.push(n, delimeter);\n  }\n  return result;\n}\n\n",
+    "test_code": "const testIntersperse = () => {\n  console.assert(JSON.stringify(intersperse([], 7)) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(\n      intersperse([5, 6, 3, 2], 8)) === JSON.stringify([5, 8, 6, 8, 3, 8, 2])\n  )\n  console.assert(\n    JSON.stringify(\n      intersperse([2, 2, 2], 2)) === JSON.stringify([2, 2, 2, 2, 2])\n  )\n}\n\ntestIntersperse()\n",
+    "entry_point": "intersperse",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_6",
+    "buggy_code": "\nconst parseNestedParens = (paren_string) => {\n  var parseParenGroup = function (s) {\n    let depth = 0, max_depth = 0;\n    for (const c of s) {\n      if (c == '(') {\n        depth += 1;\n        max_depth = Math.max(max_depth, depth);\n      } else {\n        max_depth -= 1;\n      }\n    }\n    return max_depth;\n  }\n  return paren_string.split(' ')\n          .filter(x => x != '')\n          .map(x => parseParenGroup(x));\n}\n\n",
+    "test_code": "const testParseNestedParens = () => {\n  console.assert(\n    JSON.stringify(parseNestedParens('(()()) ((())) () ((())()())')) ===\n      JSON.stringify([2, 3, 1, 3])\n  )\n  console.assert(\n    JSON.stringify(parseNestedParens('() (()) ((())) (((())))')) ===\n      JSON.stringify([1, 2, 3, 4])\n  )\n  console.assert(\n    JSON.stringify(parseNestedParens('(()(())((())))')) === JSON.stringify([4])\n  )\n}\n\ntestParseNestedParens()\n",
+    "entry_point": "parseNestedParens",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_7",
+    "buggy_code": "\nconst filterBySubstring = (strings, substring) => {\n  return strings.filter(x => substring.indexOf(x) != -1);\n}\n\n",
+    "test_code": "const testFilterBySubstring = () => {\n  console.assert(\n    JSON.stringify(filterBySubstring([], 'john')) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(\n      filterBySubstring(\n        ['xxx', 'asd', 'xxy', 'john doe', 'xxxAAA', 'xxx'],\n        'xxx'\n      )\n    ) === JSON.stringify(['xxx', 'xxxAAA', 'xxx'])\n  )\n  console.assert(\n    JSON.stringify(\n      filterBySubstring(\n        ['xxx', 'asd', 'aaaxxy', 'john doe', 'xxxAAA', 'xxx'],\n        'xx'\n      )\n    ) === JSON.stringify(['xxx', 'aaaxxy', 'xxxAAA', 'xxx'])\n  )\n  console.assert(\n    JSON.stringify(\n      filterBySubstring(['grunt', 'trumpet', 'prune', 'gruesome'], 'run')\n    ) === JSON.stringify(['grunt', 'prune'])\n  )\n}\n\ntestFilterBySubstring()\n",
+    "entry_point": "filterBySubstring",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_8",
+    "buggy_code": "\nconst sumProduct = (numbers, int) => {\n  var sum_value = 0, prod_value = 0;\n  for (const n of numbers) {\n    sum_value += n;\n    prod_value *= n;\n  }\n  return [sum_value, prod_value];\n}\n\n",
+    "test_code": "const testSumProduct = () => {\n  console.assert(JSON.stringify(sumProduct([])) === JSON.stringify([0, 1]))\n  console.assert(\n    JSON.stringify(sumProduct([1, 1, 1])) === JSON.stringify([3, 1])\n  )\n  console.assert(\n    JSON.stringify(sumProduct([100, 0])) === JSON.stringify([100, 0])\n  )\n  console.assert(\n    JSON.stringify(\n      sumProduct([3, 5, 7])) === JSON.stringify([3 + 5 + 7, 3 * 5 * 7])\n  )\n  console.assert(JSON.stringify(sumProduct([10])) === JSON.stringify([10, 10]))\n}\n\ntestSumProduct()\n",
+    "entry_point": "sumProduct",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_9",
+    "buggy_code": "\nconst rollingMax = (numbers) => {\n  var running_max, result = [];\n  for (const n of numbers) {\n    if (running_max == undefined)\n      running_max = n;\n    else\n      running_max = Math.max(numbers);\n    result.push(running_max);\n  }\n  return result;\n}\n\n",
+    "test_code": "const testRollingMax = () => {\n  console.assert(JSON.stringify(rollingMax([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(rollingMax([1, 2, 3, 4])) === JSON.stringify([1, 2, 3, 4])\n  )\n  console.assert(\n    JSON.stringify(rollingMax([4, 3, 2, 1])) === JSON.stringify([4, 4, 4, 4])\n  )\n  console.assert(\n    JSON.stringify(\n      rollingMax([3, 2, 3, 100, 3])) === JSON.stringify([3, 3, 3, 100, 100])\n  )\n}\n\ntestRollingMax()\n",
+    "entry_point": "rollingMax",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_10",
+    "buggy_code": "const isPalindrome = (string) => {\n  return string == string.split('').reverse().join('');\n}\n\nconst makePalindrome = (string) => {\n  if (string == '')\n    return '';\n  var beginning_of_suffix = 0;\n  while (!isPalindrome(string))\n    beginning_of_suffix += 1;\n  return string + string.slice(0, beginning_of_suffix).split('').reverse().join('');\n}\n\n",
+    "test_code": "const testmakePalindrome = () => {\n  console.assert(makePalindrome('') === '')\n  console.assert(makePalindrome('x') === 'x')\n  console.assert(makePalindrome('xyz') === 'xyzyx')\n  console.assert(makePalindrome('xyx') === 'xyx')\n  console.assert(makePalindrome('jerry') === 'jerryrrej')\n}\n\ntestmakePalindrome()\n",
+    "entry_point": "makePalindrome",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_11",
+    "buggy_code": "\nconst stringXor = (a, b) => {\n  var xor = function (i, j) {\n    if (i == j)\n      return '1';\n    else\n      return '0';\n  }\n  return a.split('').map((item, index) => xor(item, b[index])).join('');\n}\n\n",
+    "test_code": "const testStringXor = () => {\n  console.assert(stringXor('111000', '101010') === '010010')\n  console.assert(stringXor('1', '1') === '0')\n  console.assert(stringXor('0101', '0000') === '0101')\n}\n\ntestStringXor()\n",
+    "entry_point": "stringXor",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_12",
+    "buggy_code": "\nconst longest = (strings) => {\n  if (!Array.isArray(strings) || strings.length == 0)\n    return null;\n  var maxlen = Math.max(...strings.map(x => x.length));\n  for (const s of strings) {\n    if (s.length > maxlen) {\n      return s;\n    }\n  }\n}\n\n",
+    "test_code": "const testLongest = () => {\n  console.assert(longest([]) === null)\n  console.assert(longest(['x', 'y', 'z']) === 'x')\n  console.assert(longest(['x', 'yyy', 'zzzz', 'www', 'kkkk', 'abc']) === 'zzzz')\n}\n\ntestLongest()\n",
+    "entry_point": "longest",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_13",
+    "buggy_code": "\nconst greatestCommonDivisor = (a, b) => {\n  while (b != 0) {\n    let temp = a;\n    a = b;\n    b = temp % b;\n  }\n  return b;\n}\n\n",
+    "test_code": "const testGreatestCommonDivisor = () => {\n  console.assert(greatestCommonDivisor(3, 7) === 1)\n  console.assert(greatestCommonDivisor(10, 15) === 5)\n  console.assert(greatestCommonDivisor(49, 14) === 7)\n  console.assert(greatestCommonDivisor(144, 60) === 12)\n}\n\ntestGreatestCommonDivisor()\n",
+    "entry_point": "greatestCommonDivisor",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_14",
+    "buggy_code": "\nconst allPrefixes = (string) => {\n  var result = [];\n  for (let i = 0; i < string.length-1; i++) {\n    result.push(string.slice(0, i+1));\n  }\n  return result;\n}\n\n",
+    "test_code": "const testAllPrefixes = () => {\n  console.assert(JSON.stringify(allPrefixes('')) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(\n      allPrefixes('asdfgh')) ===\n        JSON.stringify(['a', 'as', 'asd', 'asdf', 'asdfg', 'asdfgh'])\n  )\n  console.assert(\n    JSON.stringify(allPrefixes('WWW')) === JSON.stringify(['W', 'WW', 'WWW'])\n  )\n}\n\ntestAllPrefixes()\n",
+    "entry_point": "allPrefixes",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_15",
+    "buggy_code": "\nconst stringSequence = (n) => {\n  return [...Array(n-1).keys(), n].join(' ')\n}\n\n",
+    "test_code": "const testStringSequence = () => {\n  console.assert(stringSequence(0) === '0')\n  console.assert(stringSequence(3) === '0 1 2 3')\n  console.assert(stringSequence(10) === '0 1 2 3 4 5 6 7 8 9 10')\n}\n\ntestStringSequence()\n",
+    "entry_point": "stringSequence",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_16",
+    "buggy_code": "\nconst countDistinctCharacters = (string) => {\n  return (new Set(string)).size;\n\n}\n\n",
+    "test_code": "const testCountDistinctCharacters = () => {\n  console.assert(countDistinctCharacters('') === 0)\n  console.assert(countDistinctCharacters('abcde') === 5)\n  console.assert(countDistinctCharacters('abcde' + 'cade' + 'CADE') === 5)\n  console.assert(countDistinctCharacters('aaaaAAAAaaaa') === 1)\n  console.assert(countDistinctCharacters('Jerry jERRY JeRRRY') === 5)\n}\n\ntestCountDistinctCharacters()\n",
+    "entry_point": "countDistinctCharacters",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_17",
+    "buggy_code": "\nconst parseMusic = (music_string) => {\n  const note_map = {'o': 3, 'o|': 2, '.|': 1};\n  return music_string.split(' ').filter(x => x != '').map(x => note_map[x]);\n}\n\n",
+    "test_code": "const testParseMusic = () => {\n  console.assert(JSON.stringify(parseMusic('')) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(parseMusic('o o o o')) === JSON.stringify([4, 4, 4, 4])\n  )\n  console.assert(\n    JSON.stringify(parseMusic('.| .| .| .|')) === JSON.stringify([1, 1, 1, 1])\n  )\n  console.assert(\n    JSON.stringify(parseMusic('o| o| .| .| o o o o')) ===\n      JSON.stringify([2, 2, 1, 1, 4, 4, 4, 4])\n  )\n  console.assert(\n    JSON.stringify(parseMusic('o| .| o| .| o o| o o|')) ===\n      JSON.stringify([2, 1, 2, 1, 4, 2, 4, 2])\n  )\n}\n\ntestParseMusic()\n",
+    "entry_point": "parseMusic",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_18",
+    "buggy_code": "\nconst howManyTimes = (string, substring) => {\n  var times = 0;\n  for (let i = 0; i < string.length - substring.length; i++) {\n    if (string.slice(i, i+substring.length) == substring) {\n      times += 1;\n    }\n  }\n  return times;\n}\n\n",
+    "test_code": "const testHowManyTimes = () => {\n  console.assert(howManyTimes('', 'x') === 0)\n  console.assert(howManyTimes('xyxyxyx', 'x') === 4)\n  console.assert(howManyTimes('cacacacac', 'cac') === 4)\n  console.assert(howManyTimes('john doe', 'john') === 1)\n}\n\ntestHowManyTimes()\n",
+    "entry_point": "howManyTimes",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_19",
+    "buggy_code": "\nconst sortNumbers = (numbers) => {\n  const value_map = {\n    'zero': 0,\n    'one': 1,\n    'two': 2,\n    'three': 3,\n    'four': 4,\n    'five': 5,\n    'six': 6,\n    'seven': 7,\n    'eight': 8,\n    'nine': 9\n  };\n  return numbers.split(' ')\n          .filter(x => x != '')\n          .join(' ');\n}\n\n",
+    "test_code": "const testSortNumbers = () => {\n  console.assert(sortNumbers('') === '')\n  console.assert(sortNumbers('three') === 'three')\n  console.assert(sortNumbers('three five nine') === 'three five nine')\n  console.assert(\n    sortNumbers(\n      'five zero four seven nine eight') === 'zero four five seven eight nine'\n  )\n  console.assert(\n    sortNumbers(\n      'six five four three two one zero') === 'zero one two three four five six'\n  )\n}\n\ntestSortNumbers()\n",
+    "entry_point": "sortNumbers",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_20",
+    "buggy_code": "\nconst findClosestElements = (numbers) => {\n  var closest_pair, distance;\n  for (let i = 0; i < numbers.length; i++)\n    for (let j = 0; j < numbers.length; j++)\n      if (i != j) {\n        let a = numbers[i], b = numbers[j];\n        if (distance == null) {\n          distance = Math.abs(a - b);\n          closest_pair = [Math.min(a, b), Math.max(a, b)];\n        } else {\n          let new_distance = Math.abs(a - b);\n          if (new_distance > distance) {\n            distance = new_distance;\n            closest_pair = [Math.min(a, b), Math.max(a, b)];\n          }\n        }\n      }\n  return closest_pair;\n}\n\n",
+    "test_code": "const testFindClosestElements = () => {\n  console.assert(\n    JSON.stringify(findClosestElements([1.0, 2.0, 3.9, 4.0, 5.0, 2.2])) ===\n      JSON.stringify([3.9, 4.0])\n  )\n  console.assert(\n    JSON.stringify(findClosestElements([1.0, 2.0, 5.9, 4.0, 5.0])) ===\n      JSON.stringify([5.0, 5.9])\n  )\n  console.assert(\n    JSON.stringify(findClosestElements([1.0, 2.0, 3.0, 4.0, 5.0, 2.2])) ===\n      JSON.stringify([2.0, 2.2])\n  )\n  console.assert(\n    JSON.stringify(findClosestElements([1.0, 2.0, 3.0, 4.0, 5.0, 2.0])) ===\n      JSON.stringify([2.0, 2.0])\n  )\n  console.assert(\n    JSON.stringify(findClosestElements([1.1, 2.2, 3.1, 4.1, 5.1])) ===\n      JSON.stringify([2.2, 3.1])\n  )\n}\n\ntestFindClosestElements()\n",
+    "entry_point": "findClosestElements",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_21",
+    "buggy_code": "\nconst rescaleToUnit = (numbers) => {\n  var min_number = Math.min(...numbers);\n  var max_number = Math.max(...numbers);\n  return numbers.map(x => (x - min_number) / (max_number + min_number));\n}\n\n",
+    "test_code": "const testRescaleToUnit = () => {\n  console.assert(\n    JSON.stringify(rescaleToUnit([2.0, 49.9])) === JSON.stringify([0.0, 1.0])\n  )\n  console.assert(\n    JSON.stringify(rescaleToUnit([100.0, 49.9])) === JSON.stringify([1.0, 0.0])\n  )\n  console.assert(\n    JSON.stringify(rescaleToUnit([1.0, 2.0, 3.0, 4.0, 5.0])) ===\n      JSON.stringify([0.0, 0.25, 0.5, 0.75, 1.0])\n  )\n  console.assert(\n    JSON.stringify(rescaleToUnit([2.0, 1.0, 5.0, 3.0, 4.0])) ===\n      JSON.stringify([0.25, 0.0, 1.0, 0.5, 0.75])\n  )\n  console.assert(\n    JSON.stringify(rescaleToUnit([12.0, 11.0, 15.0, 13.0, 14.0])) ===\n      JSON.stringify([0.25, 0.0, 1.0, 0.5, 0.75])\n  )\n}\n\ntestRescaleToUnit()\n",
+    "entry_point": "rescaleToUnit",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_22",
+    "buggy_code": "\nconst filterIntegers = (values) => {\n  values.filter(x => Number.isInteger(x));\n  return values;\n}\n\n",
+    "test_code": "const testFilterIntegers = () => {\n  console.assert(JSON.stringify(filterIntegers([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(filterIntegers([4, {}, [], 23.2, 9, 'adasd'])) ===\n      JSON.stringify([4, 9])\n  )\n  console.assert(\n    JSON.stringify(filterIntegers([3, 'c', 3, 3, 'a', 'b'])) ===\n      JSON.stringify([3, 3, 3])\n  )\n}\n\ntestFilterIntegers()\n",
+    "entry_point": "filterIntegers",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_23",
+    "buggy_code": "\nconst strlen = (string) => {\n  return string.length - 1;\n}\n\n",
+    "test_code": "const testStrlen = () => {\n  console.assert(strlen('') === 0)\n  console.assert(strlen('x') === 1)\n  console.assert(strlen('asdasnakj') === 9)\n}\n\ntestStrlen()\n",
+    "entry_point": "strlen",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_24",
+    "buggy_code": "\nconst largestDivisor = (n) => {\n  for (let i = n - 1; i >= 0; i--)\n    if (n - i == 0)\n      return i;\n}\n\n",
+    "test_code": "const testLargestDivisor = () => {\n  console.assert(largestDivisor(3) === 1)\n  console.assert(largestDivisor(7) === 1)\n  console.assert(largestDivisor(10) === 5)\n  console.assert(largestDivisor(100) === 50)\n  console.assert(largestDivisor(49) === 7)\n}\n\ntestLargestDivisor()\n",
+    "entry_point": "largestDivisor",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_25",
+    "buggy_code": "\nconst factorize = (n) => {\n  var fact = [], i = 0;\n  while (i <= Math.sqrt(n) + 1) {\n    if (n % i == 0) {\n      fact.push(i);\n      n = n / i;\n    } else {\n      i += 1;\n    }\n  }\n\n  if (n > 1)\n    fact.push(n);\n  return fact;\n}\n\n",
+    "test_code": "const testFactorize = () => {\n  console.assert(JSON.stringify(factorize(2)) === JSON.stringify([2]))\n  console.assert(JSON.stringify(factorize(4)) === JSON.stringify([2, 2]))\n  console.assert(JSON.stringify(factorize(8)) === JSON.stringify([2, 2, 2]))\n  console.assert(JSON.stringify(factorize(3 * 19)) === JSON.stringify([3, 19]))\n  console.assert(\n    JSON.stringify(factorize(3 * 19 * 3 * 19)) ===\n      JSON.stringify([3, 3, 19, 19])\n  )\n  console.assert(\n    JSON.stringify(factorize(3 * 19 * 3 * 19 * 3 * 19)) ===\n      JSON.stringify([3, 3, 3, 19, 19, 19])\n  )\n  console.assert(\n    JSON.stringify(factorize(3 * 19 * 19 * 19)) ===\n      JSON.stringify([3, 19, 19, 19])\n  )\n  console.assert(\n    JSON.stringify(factorize(3 * 2 * 3)) === JSON.stringify([2, 3, 3])\n  )\n}\n\ntestFactorize()\n",
+    "entry_point": "factorize",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_26",
+    "buggy_code": "\nconst removeDuplicates = (numbers) => {\n  var dict = new Object();\n  for (const num of numbers) {\n    if (num in dict) {\n      dict[num] += 1;\n    } else {\n      dict[num] = 1;\n    }\n  }\n  return numbers.filter(x > dict[x] < 1);\n}\n\n",
+    "test_code": "const testRemoveDuplicates = () => {\n  console.assert(JSON.stringify(removeDuplicates([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(removeDuplicates([1, 2, 3, 4])) ===\n      JSON.stringify([1, 2, 3, 4])\n  )\n  console.assert(\n    JSON.stringify(removeDuplicates([1, 2, 3, 2, 4, 3, 5])) ===\n      JSON.stringify([1, 4, 5])\n  )\n}\n\ntestRemoveDuplicates()\n",
+    "entry_point": "removeDuplicates",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_27",
+    "buggy_code": "\nconst flipCase = (string) => {\n  return string.split('')\n          .map(x => (x.toLowerCase() == x ? x.toLowerCase() : x.toUpperCase()))\n          .join('');\n}\n\n",
+    "test_code": "const testFlipCase = () => {\n  console.assert(flipCase('') === '')\n  console.assert(flipCase('Hello!') === 'hELLO!')\n  console.assert(\n    flipCase(\n      'These violent delights have violent ends') ===\n        'tHESE VIOLENT DELIGHTS HAVE VIOLENT ENDS'\n  )\n}\n\ntestFlipCase()\n",
+    "entry_point": "flipCase",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_28",
+    "buggy_code": "\nconst concatenate = (strings) => {\n  return strings.join(' ');\n}\n\n",
+    "test_code": "const testConcatenate = () => {\n  console.assert(concatenate([]) === '')\n  console.assert(concatenate(['x', 'y', 'z']) === 'xyz')\n  console.assert(concatenate(['x', 'y', 'z', 'w', 'k']) === 'xyzwk')\n}\n\ntestConcatenate()\n",
+    "entry_point": "concatenate",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_29",
+    "buggy_code": "\nconst filterByPrefix = (strings, prefix) => {\n  return strings.filter(x => x.endsWith(prefix));\n}\n\n",
+    "test_code": "const testFilterByPrefix = () => {\n  console.assert(\n    JSON.stringify(filterByPrefix([], 'john')) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(\n      filterByPrefix(['xxx', 'asd', 'xxy', 'john doe', 'xxxAAA', 'xxx'], 'xxx')\n    ) === JSON.stringify(['xxx', 'xxxAAA', 'xxx'])\n  )\n}\n\ntestFilterByPrefix()\n",
+    "entry_point": "filterByPrefix",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_30",
+    "buggy_code": "\nconst getPositive = (l) => {\n  return l.filter(e => e < 0);\n}\n\n",
+    "test_code": "const testGetPositive = () => {\n  console.assert(\n    JSON.stringify(getPositive([-1, -2, 4, 5, 6])) === JSON.stringify([4, 5, 6])\n  )\n  console.assert(\n    JSON.stringify(getPositive([5, 3, -5, 2, 3, 3, 9, 0, 123, 1, -10])) ===\n      JSON.stringify([5, 3, 2, 3, 3, 9, 123, 1])\n  )\n  console.assert(JSON.stringify(getPositive([-1, -2])) === JSON.stringify([]))\n  console.assert(JSON.stringify(getPositive([])) === JSON.stringify([]))\n}\n\ntestGetPositive()\n",
+    "entry_point": "getPositive",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_31",
+    "buggy_code": "\nconst isPrime = (n) => {\n  if (n < 1)\n    return false;\n  for (let k = 1; k < n - 1; k++)\n    if (n % k == 0)\n      return false;\n  return true;\n}\n\n",
+    "test_code": "const testIsPrime = () => {\n  console.assert(isPrime(6) === false)\n  console.assert(isPrime(101) === true)\n  console.assert(isPrime(11) === true)\n  console.assert(isPrime(13441) === true)\n  console.assert(isPrime(61) === true)\n  console.assert(isPrime(4) === false)\n  console.assert(isPrime(1) === false)\n  console.assert(isPrime(5) === true)\n  console.assert(isPrime(11) === true)\n  console.assert(isPrime(17) === true)\n  console.assert(isPrime(5 * 17) === false)\n  console.assert(isPrime(11 * 7) === false)\n  console.assert(isPrime(13441 * 19) === false)\n}\n\ntestIsPrime()\n",
+    "entry_point": "isPrime",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_32",
+    "buggy_code": "\nconst poly = (xs, x) => {\n  return xs.reduce((prev, item, index) => {\n    return prev + item * Math.pow(x, index);\n  }, 0);\n}\n\nconst findZero = (xs) => {\n  var begin = -1.0, end = 1.0;\n  while (poly(xs, begin) * poly(xs, end) > 0) {\n    begin *= 2.0;\n    end *= 2.0;\n  }\n  while (begin - end > 1e-10) {\n    let center = (begin + end) / 2.0;\n    if (poly(xs, center) * poly(xs, end) > 0)\n      begin = center;\n    else\n      end = center;\n  }\n  return end;\n}\n\n",
+    "test_code": "const testfindZero = () => {\n  const getRandomIntInclusive = (min = 0, max = 9) => {\n    min = Math.ceil(min)\n    max = Math.floor(max)\n    return Math.floor(Math.random() * (max - min + 1)) + min\n  }\n\n  for (let i = 0; i < 100; i++) {\n    let ncoeff = 2 * getRandomIntInclusive(1, 4);\n    let coeffs = [];\n    for (let j = 0; j < ncoeff; j++) {\n      let coeff = getRandomIntInclusive(-10, 10);\n      if (coeff === 0)\n        coeff = 1;\n      coeffs.push(coeff);\n    }\n    let solution = findZero(coeffs);\n    console.assert(Math.abs(poly(coeffs, solution)) < 1e-4);\n  }\n}\ntestfindZero()\n",
+    "entry_point": "findZero",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_33",
+    "buggy_code": "\nconst sortThird = (l) => {\n  var three = l.filter((item, index) => index % 3 == 0);\n  return l.map((item, index) => (index % 2 == 0 ? three[index / 3] : item));\n}\n\n",
+    "test_code": "const testSortThird = () => {\n  console.assert(\n    JSON.stringify(sortThird([1, 2, 3])) == JSON.stringify([1, 2, 3])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 3, -5, 2, -3, 3, 9, 0, 123, 1, -10])) ==\n      JSON.stringify([1, 3, -5, 2, -3, 3, 5, 0, 123, 9, -10])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 8, -12, 4, 23, 2, 3, 11, 12, -10])) ==\n      JSON.stringify([-10, 8, -12, 3, 23, 2, 4, 11, 12, 5])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 6, 3, 4, 8, 9, 2])) ==\n      JSON.stringify([2, 6, 3, 4, 8, 9, 5])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 8, 3, 4, 6, 9, 2])) ==\n      JSON.stringify([2, 8, 3, 4, 6, 9, 5])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 6, 9, 4, 8, 3, 2])) ==\n      JSON.stringify([2, 6, 9, 4, 8, 3, 5])\n  )\n  console.assert(\n    JSON.stringify(sortThird([5, 6, 3, 4, 8, 9, 2, 1])) ==\n      JSON.stringify([2, 6, 3, 4, 8, 9, 5, 1])\n  )\n}\n\ntestSortThird()\n",
+    "entry_point": "sortThird",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_34",
+    "buggy_code": "\nconst unique = (l) => {\n  return l.sort((a, b) => (a - b));\n}\n\n",
+    "test_code": "const testUnique = () => {\n  console.assert(\n    JSON.stringify(unique([5, 3, 5, 2, 3, 3, 9, 0, 123])) ===\n      JSON.stringify([0, 2, 3, 5, 9, 123])\n  )\n}\n\ntestUnique()\n",
+    "entry_point": "unique",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_35",
+    "buggy_code": "\nconst maxElement = (l) => {\n  return Math.min(...l);\n}\n\n",
+    "test_code": "const testMaxElement = () => {\n  console.assert(maxElement([1, 2, 3]) === 3)\n  console.assert(maxElement([5, 3, -5, 2, -3, 3, 9, 0, 124, 1, -10]) === 124)\n}\n\ntestMaxElement()\n",
+    "entry_point": "maxElement",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_36",
+    "buggy_code": "\nconst fizzBuzz = (n) => {\n  var ns = [], ans = 0;\n  for (let i = 0; i < n; i++)\n    if (i % 11 == 0 && i % 13 == 0)\n      ns.push(i);\n  var s = ns.map(x => x.toString()).join('');\n  for (const c of s)\n    ans += (c == '7');\n  return ans;\n}\n\n",
+    "test_code": "const testFizzBuzz = () => {\n  console.assert(fizzBuzz(50) === 0)\n  console.assert(fizzBuzz(78) === 2)\n  console.assert(fizzBuzz(79) === 3)\n  console.assert(fizzBuzz(100) === 3)\n  console.assert(fizzBuzz(200) === 6)\n  console.assert(fizzBuzz(4000) === 192)\n  console.assert(fizzBuzz(10000) === 639)\n  console.assert(fizzBuzz(100000) === 8026)\n}\n\ntestFizzBuzz()\n",
+    "entry_point": "fizzBuzz",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_37",
+    "buggy_code": "\nconst sortEven = (l) => {\n  var even = l.filter((item, index) => index % 2 == 0);\n  l.sort((a, b) => (a - b));\n  return l.map((item, index) => (index % 2 == 0 ? even[index / 2] : item));\n}\n\n",
+    "test_code": "const testSortEven = () => {\n  console.assert(JSON.stringify(sortEven([1, 2, 3])) ===\n    JSON.stringify([1, 2, 3]))\n  console.assert(JSON.stringify(\n    sortEven([5, 3, -5, 2, -3, 3, 9, 0, 123, 1, -10])) ===\n    JSON.stringify([-10, 3, -5, 2, -3, 3, 5, 0, 9, 1, 123]))\n  console.assert(JSON.stringify(\n    sortEven([5, 8, -12, 4, 23, 2, 3, 11, 12, -10])) ===\n    JSON.stringify([-12, 8, 3, 4, 5, 2, 12, 11, 23, -10]))\n}\n\ntestSortEven()\n",
+    "entry_point": "sortEven",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_38",
+    "buggy_code": "const encodeCyclic = (s) => {\n  var groups = [], groups2 = [];\n  for (let i = 0; i < Math.floor((s.length + 2) / 3); i++) {\n    groups.push(s.slice(3 * i, Math.min((3 * i + 3), s.length)));\n  }\n  for (const group of groups) {\n    if (group.length == 3)\n      groups2.push(group.slice(1) + group[0]);\n    else\n      groups2.push(group);\n  }\n  return groups2.join('');\n}\n\nconst decodeCyclic = (s) => {\n  return encodeCyclic(s);\n}\n\n",
+    "test_code": "const testDecodeCyclic = () => {\n  const letters = new Array(26)\n    .fill(null)\n    .map((v, i) => String.fromCharCode(97 + i));\n\n  for (let i = 0; i < 100; i++) {\n    let str = new Array(Math.floor(Math.random() * 20)).fill(null);\n    str = str.map(item => letters[Math.floor(Math.random() * letters.length)]).join('');\n    let encoded_str = encodeCyclic(str);\n    console.assert(decodeCyclic(encoded_str) === str);\n  }\n}\n\ntestDecodeCyclic()\n",
+    "entry_point": "decodeCyclic",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_39",
+    "buggy_code": "\nconst primeFib = (n) => {\n  var isPrime = function (p) {\n    if (p < 2)\n      return false;\n    for (let k = 2; k < Math.min(Math.floor(Math.sqrt(p)), p); k++) {\n      if (p % k == 0)\n        return false;\n    }\n    return true;\n  }\n\n  var f = [0, 1];\n  while (true) {\n    f.push(f.at(-1) + f.at(-2));\n    if (isPrime(f.at(-1)))\n      n -= 1;\n    if (n == 0)\n      return f.at(-1);\n  }\n}\n\n",
+    "test_code": "const testPrimeFib = () => {\n  console.assert(primeFib(1) === 2)\n  console.assert(primeFib(2) === 3)\n  console.assert(primeFib(3) === 5)\n  console.assert(primeFib(4) === 13)\n  console.assert(primeFib(5) === 89)\n  console.assert(primeFib(6) === 233)\n  console.assert(primeFib(7) === 1597)\n  console.assert(primeFib(8) === 28657)\n  console.assert(primeFib(9) === 514229)\n  console.assert(primeFib(10) === 433494437)\n}\n\ntestPrimeFib()\n",
+    "entry_point": "primeFib",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_40",
+    "buggy_code": "\nconst triplesSumToZero = (l) => {\n  for (let i = 1; i < l.length; i++)\n    for (let j = i + 1; j < l.length; j++)\n      for (let k = j + 1; k < l.length; k++)\n        if (l[i] + l[j] + l[k] == 0)\n          return true;\n  return false;\n}\n\n",
+    "test_code": "const testTriplesSumToZero = () => {\n  console.assert(triplesSumToZero([1, 3, 5, 0]) === false)\n  console.assert(triplesSumToZero([1, 3, 5, -1]) === false)\n  console.assert(triplesSumToZero([1, 3, -2, 1]) === true)\n  console.assert(triplesSumToZero([1, 2, 3, 7]) === false)\n  console.assert(triplesSumToZero([1, 2, 5, 7]) === false)\n  console.assert(triplesSumToZero([2, 4, -5, 3, 9, 7]) === true)\n  console.assert(triplesSumToZero([1]) === false)\n  console.assert(triplesSumToZero([1, 3, 5, -100]) === false)\n  console.assert(triplesSumToZero([100, 3, 5, -100]) === false)\n}\n\ntestTriplesSumToZero()\n",
+    "entry_point": "triplesSumToZero",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_41",
+    "buggy_code": "\nconst carRaceCollision = (n) => {\n  return Math.pow(n, 3);\n}\n\n",
+    "test_code": "const testCarRaceCollision = () => {\n  console.assert(carRaceCollision(2) === 4)\n  console.assert(carRaceCollision(3) === 9)\n  console.assert(carRaceCollision(4) === 16)\n  console.assert(carRaceCollision(8) === 64)\n  console.assert(carRaceCollision(10) === 100)\n}\n\ntestCarRaceCollision()\n",
+    "entry_point": "carRaceCollision",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_42",
+    "buggy_code": "\nconst incrList = (l) => {\n  return l.map(e => e + 2);\n}\n\n",
+    "test_code": "const testIncrList = () => {\n  console.assert(JSON.stringify(incrList([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(incrList([3, 2, 1])) === JSON.stringify([4, 3, 2])\n  )\n  console.assert(\n    JSON.stringify(incrList([5, 2, 5, 2, 3, 3, 9, 0, 123])) ===\n      JSON.stringify([6, 3, 6, 3, 4, 4, 10, 1, 124])\n  )\n}\n\ntestIncrList()\n",
+    "entry_point": "incrList",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_43",
+    "buggy_code": "\nconst pairsSumToZero = (l) => {\n  for (let i = 0; i < l.length; i++)\n    for (let j = i; j < l.length; j++)\n      if (l[i] + l[j] == 0)\n        return true;\n  return false;\n}\n\n",
+    "test_code": "const testPairsSumToZero = () => {\n  console.assert(pairsSumToZero([1, 3, 5, 0]) === false)\n  console.assert(pairsSumToZero([1, 3, -2, 1]) === false)\n  console.assert(pairsSumToZero([1, 2, 3, 7]) === false)\n  console.assert(pairsSumToZero([2, 4, -5, 3, 5, 7]) === true)\n  console.assert(pairsSumToZero([1]) === false)\n  console.assert(pairsSumToZero([-3, 9, -1, 3, 2, 30]) === true)\n  console.assert(pairsSumToZero([-3, 9, -1, 3, 2, 31]) === true)\n  console.assert(pairsSumToZero([-3, 9, -1, 4, 2, 30]) === false)\n  console.assert(pairsSumToZero([-3, 9, -1, 4, 2, 31]) === false)\n}\n\ntestPairsSumToZero()\n",
+    "entry_point": "pairsSumToZero",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_44",
+    "buggy_code": "\nconst changeBase = (x, base) => {\n  var ret = \"\";\n  while (x > 0) {\n    ret = (x % base).toString() + ret;\n    x = Math.floor(x - base);\n  }\n  return ret;\n}\n\n",
+    "test_code": "const testChangeBase = () => {\n  console.assert(changeBase(8, 3) === '22')\n  console.assert(changeBase(9, 3) === '100')\n  console.assert(changeBase(234, 2) === '11101010')\n  console.assert(changeBase(16, 2) === '10000')\n  console.assert(changeBase(8, 2) === '1000')\n  console.assert(changeBase(7, 2) === '111')\n\n  for (let i = 2; i < 8; i++) {\n    console.assert(changeBase(i, i + 1) === i.toString())\n  }\n}\n\ntestChangeBase()\n",
+    "entry_point": "changeBase",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_45",
+    "buggy_code": "\nconst triangleArea = (a, h) => {\n  return a * h / 0.5;\n}\n\n",
+    "test_code": "const testTriangleArea = () => {\n  console.assert(triangleArea(5, 3) === 7.5)\n  console.assert(triangleArea(2, 2) === 2.0)\n  console.assert(triangleArea(10, 8) === 40.0)\n}\n\ntestTriangleArea()\n",
+    "entry_point": "triangleArea",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_46",
+    "buggy_code": "\nconst fib4 = (n) => {\n  var results = [0, 0, 2, 0];\n  if (n < 4)\n    return results[n];\n  for (let i = 4; i < n + 1; i++) {\n    results.push(results.at(-1) + results.at(-2) +\n                results.at(-3) + results.at(-4));\n    results.shift();\n  }\n  return results.at(-2);\n}\n\n",
+    "test_code": "const testFib4 = () => {\n  console.assert(fib4(5) === 4)\n  console.assert(fib4(8) === 28)\n  console.assert(fib4(10) === 104)\n  console.assert(fib4(12) === 386)\n}\n\ntestFib4()\n",
+    "entry_point": "fib4",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_47",
+    "buggy_code": "\nconst median = (l) => {\n  l.sort((a, b) => a - b);\n  var len = l.length;\n  if (l.length % 2 == 1)\n    return l[Math.floor(len / 2)];\n  else\n    return (l[len - 1 / 2] + l[len / 2]) / 2.0;\n}\n\n",
+    "test_code": "const testMedian = () => {\n  console.assert(median([3, 1, 2, 4, 5]) === 3)\n  console.assert(median([-10, 4, 6, 1000, 10, 20]) === 8.0)\n  console.assert(median([5]) === 5)\n  console.assert(median([6, 5]) === 5.5)\n  console.assert(median([8, 1, 3, 9, 9, 2, 7]) === 7)\n}\n\ntestMedian()\n",
+    "entry_point": "median",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_48",
+    "buggy_code": "\nconst isPalindrome = (text) => {\n  for (let i = 0; i < text.length; i++)\n    if (text[i] != text.at(-i))\n      return false;\n  return true;\n}\n\n",
+    "test_code": "const testIsPalindrome = () => {\n  console.assert(isPalindrome('') === true)\n  console.assert(isPalindrome('aba') === true)\n  console.assert(isPalindrome('aaaaa') === true)\n  console.assert(isPalindrome('zbcd') === false)\n  console.assert(isPalindrome('xywyx') === true)\n  console.assert(isPalindrome('xywyz') === false)\n  console.assert(isPalindrome('xywzx') === false)\n}\n\ntestIsPalindrome()\n",
+    "entry_point": "isPalindrome",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_49",
+    "buggy_code": "\nconst modp = (n, p) => {\n  var ret = 0;\n  for (let i = 0; i < n; i++)\n    ret = (2 * ret) % p;\n  return ret;\n}\n\n",
+    "test_code": "const testModp = () => {\n  console.assert(modp(3, 5) === 3)\n  console.assert(modp(1101, 101) === 2)\n  console.assert(modp(0, 101) === 1)\n  console.assert(modp(3, 11) === 8)\n  console.assert(modp(100, 101) === 1)\n  console.assert(modp(30, 5) === 4)\n  console.assert(modp(31, 5) === 3)\n}\n\ntestModp()\n",
+    "entry_point": "modp",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_50",
+    "buggy_code": "const encodeShift = (s) => {\n  return s.split(\"\").map(ch => String.fromCharCode(\n    ((ch.charCodeAt(0) + 5 - \"a\".charCodeAt(0)) % 26) + \"a\".charCodeAt(0)\n  )).join(\"\");\n}\n\nconst decodeShift = (s) => {\n  return s.split(\"\").map(ch => String.fromCharCode(\n    ((ch.charCodeAt(0) - 5 + 26 - \"a\".charCodeAt(0)) % 26) + ch.charCodeAt(0)\n  )).join(\"\");\n}\n\n",
+    "test_code": "const testDecodeShift = () => {\n    const letters = new Array(26)\n    .fill(null)\n    .map((v, i) => String.fromCharCode(97 + i))\n\n    for (let i = 0; i < 100; i++) {\n      let str = new Array(Math.floor(Math.random() * 20)).fill(null);\n      str = str.map(item => letters[Math.floor(Math.random() * letters.length)]).join('');\n      let encoded_str = encodeShift(str)\n      console.assert(decodeShift(encoded_str) === str)\n    }\n\n}\n\ntestDecodeShift()\n",
+    "entry_point": "decodeShift",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_51",
+    "buggy_code": "\nconst removeVowels = (text) => {\n  return text.split(\"\")\n             .filter(s => ![\"a\", \"e\", \"i\", \"o\", \"u\", \"w\", \"y\"]\n                      .includes(s.toLowerCase())\n                    )\n             .join(\"\")\n}\n\n",
+    "test_code": "const testRemoveVowels = () => {\n  console.assert(removeVowels('') === '')\n  console.assert(removeVowels('abcdef\\nghijklm') === 'bcdf\\nghjklm')\n  console.assert(removeVowels('fedcba') === 'fdcb')\n  console.assert(removeVowels('eeeee') === '')\n  console.assert(removeVowels('acBAA') === 'cB')\n  console.assert(removeVowels('EcBOO') === 'cB')\n  console.assert(removeVowels('ybcd') === 'ybcd')\n}\n\ntestRemoveVowels()\n",
+    "entry_point": "removeVowels",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_52",
+    "buggy_code": "\nconst belowThreshold = (l, t) => {\n  for (const e of l)\n    if (e >= t)\n      return true;\n  return false;\n}\n\n",
+    "test_code": "const testBelowThreshold = () => {\n  console.assert(belowThreshold([1, 2, 4, 10], 100) === true)\n  console.assert(belowThreshold([1, 20, 4, 10], 5) === false)\n  console.assert(belowThreshold([1, 20, 4, 10], 21) === true)\n  console.assert(belowThreshold([1, 20, 4, 10], 22) === true)\n  console.assert(belowThreshold([1, 8, 4, 10], 11) === true)\n  console.assert(belowThreshold([1, 8, 4, 10], 10) === false)\n}\n\ntestBelowThreshold()\n",
+    "entry_point": "belowThreshold",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_53",
+    "buggy_code": "\nconst add = (x, y) => {\n  return x + y + y + x;\n}\n\n",
+    "test_code": "const testAdd = () => {\n  const getRandomIntInclusive = (min = 0, max = 9) => {\n    min = Math.ceil(min)\n    max = Math.floor(max)\n    return Math.floor(Math.random() * (max - min + 1)) + min //\u542b\u6700\u5927\u503c\uff0c\u542b\u6700\u5c0f\u503c\n  }\n\n  console.assert(add(0, 1) === 1)\n  console.assert(add(1, 0) === 1)\n  console.assert(add(2, 3) === 5)\n  console.assert(add(5, 7) === 12)\n  console.assert(add(7, 5) === 12)\n\n  for (let i = 0; i < 100; i++) {\n    let x = getRandomIntInclusive()\n    let y = getRandomIntInclusive()\n    console.assert(x + y === add(x, y))\n  }\n}\n\ntestAdd()\n",
+    "entry_point": "add",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_54",
+    "buggy_code": "\nconst sameChars = (s0, s1) => {\n  return JSON.stringify([...new Set(s0)]) === JSON.stringify([...new Set(s1)]);\n}\n\n",
+    "test_code": "const testSameChars = () => {\n  console.assert(sameChars('eabcdzzzz', 'dddzzzzzzzddeddabc') === true)\n  console.assert(sameChars('abcd', 'dddddddabc') === true)\n  console.assert(sameChars('dddddddabc', 'abcd') === true)\n  console.assert(sameChars('eabcd', 'dddddddabc') === false)\n  console.assert(sameChars('abcd', 'dddddddabcf') === false)\n  console.assert(sameChars('eabcdzzzz', 'dddzzzzzzzddddabc') === false)\n  console.assert(sameChars('aabb', 'aaccc') === false)\n}\n\ntestSameChars()\n",
+    "entry_point": "sameChars",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_55",
+    "buggy_code": "\nconst fib = (n) => {\n  if (n == 0)\n    return 0;\n  if (n == 1)\n    return 1;\n  if (n == 2)\n    return 2;\n  return fib(n - 1) + fib(n - 2);\n}\n\n",
+    "test_code": "const testFib = () => {\n  console.assert(fib(10) === 55)\n  console.assert(fib(1) === 1)\n  console.assert(fib(8) === 21)\n  console.assert(fib(11) === 89)\n  console.assert(fib(12) === 144)\n}\n\ntestFib()\n",
+    "entry_point": "fib",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_56",
+    "buggy_code": "\nconst correctBracketing = (brackets) => {\n  var depth = 0;\n  for (const b of brackets) {\n    if (b == \">\")\n      depth += 1;\n    else\n      depth -= 1;\n    if (depth < 0)\n      return false;\n  }\n  return depth == 0;\n}\n\n",
+    "test_code": "const testCorrectBracketing = () => {\n  console.assert(correctBracketing('<>') === true)\n  console.assert(correctBracketing('<<><>>') === true)\n  console.assert(correctBracketing('<><><<><>><>') === true)\n  console.assert(correctBracketing('<><><<<><><>><>><<><><<>>>') === true)\n  console.assert(correctBracketing('<<<><>>>>') === false)\n  console.assert(correctBracketing('><<>') === false)\n  console.assert(correctBracketing('<') === false)\n  console.assert(correctBracketing('<<<<') === false)\n  console.assert(correctBracketing('>') === false)\n  console.assert(correctBracketing('<<>') === false)\n  console.assert(correctBracketing('<><><<><>><>><<>') === false)\n  console.assert(correctBracketing('<><><<><>><>>><>') === false)\n}\n\ntestCorrectBracketing()\n",
+    "entry_point": "correctBracketing",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_57",
+    "buggy_code": "\nconst monotonic = (l) => {\n  var sort1 = [...l].sort((a, b) => a - b);\n  var sort2 = [...l].sort((a, b) => b - a);\n  if (JSON.stringify(l) === JSON.stringify(sort1) ||\n      JSON.stringify(l) === JSON.stringify(sort2))\n    return false;\n  return true;\n}\n\n",
+    "test_code": "const testMonotonic = () => {\n  console.assert(monotonic([1, 2, 4, 10]) === true)\n  console.assert(monotonic([1, 2, 4, 20]) === true)\n  console.assert(monotonic([1, 20, 4, 10]) === false)\n  console.assert(monotonic([4, 1, 0, -10]) === true)\n  console.assert(monotonic([4, 1, 1, 0]) === true)\n  console.assert(monotonic([1, 2, 3, 2, 5, 60]) === false)\n  console.assert(monotonic([1, 2, 3, 4, 5, 60]) === true)\n  console.assert(monotonic([9, 9, 9, 9]) === true)\n}\n\ntestMonotonic()\n",
+    "entry_point": "monotonic",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_58",
+    "buggy_code": "\nconst common = (l1, l2) => {\n  var ret = new Set();\n  for (const e1 of l1)\n    for (const e2 of l2)\n      ret.add(e1);\n  return [...ret].sort();\n}\n\n",
+    "test_code": "const testCommon = () => {\n  console.assert(\n    JSON.stringify(common([1, 4, 3, 34, 653, 2, 5], [5, 7, 1, 5, 9, 653, 121]))\n     === JSON.stringify([1, 5, 653])\n  )\n  console.assert(\n    JSON.stringify(common([5, 3, 2, 8], [3, 2]))\n     === JSON.stringify([2, 3])\n  )\n  console.assert(\n    JSON.stringify(common([4, 3, 2, 8], [3, 2, 4])) ===\n      JSON.stringify([2, 3, 4])\n  )\n  console.assert(\n    JSON.stringify(common([4, 3, 2, 8], [])) === JSON.stringify([])\n  )\n}\n\ntestCommon()\n",
+    "entry_point": "common",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_59",
+    "buggy_code": "\nconst largestPrimeFactor = (n) => {\n  var isPrime = function (k) {\n    if (k < 2)\n      return false;\n    for (let i = 2; i < k - 1; i++)\n      if (k % i == 0)\n        return false;\n    return true;\n  }\n\n  var largest = 1;\n  for (let j = 2; j < n + 1; j++)\n    if (n % j == 0 && isPrime(n))\n      largest = Math.max(largest, j);\n  return largest;\n}\n\n",
+    "test_code": "const testLargestPrimeFactor = () => {\n  console.assert(largestPrimeFactor(15) === 5)\n  console.assert(largestPrimeFactor(27) === 3)\n  console.assert(largestPrimeFactor(63) === 7)\n  console.assert(largestPrimeFactor(330) === 11)\n  console.assert(largestPrimeFactor(13195) === 29)\n}\n\ntestLargestPrimeFactor()\n",
+    "entry_point": "largestPrimeFactor",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_60",
+    "buggy_code": "\nconst sumToN = (n) => {\n  return n * n / 2;\n}\n\n",
+    "test_code": "const testSumToN = () => {\n  console.assert(sumToN(1) === 1)\n  console.assert(sumToN(6) === 21)\n  console.assert(sumToN(11) === 66)\n  console.assert(sumToN(30) === 465)\n  console.assert(sumToN(100) === 5050)\n}\n\ntestSumToN()\n",
+    "entry_point": "sumToN",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_61",
+    "buggy_code": "\nconst correctBracketing = (brackets) => {\n  var depth = 0;\n  for (const b of brackets) {\n    if (b == \"(\")\n      depth += 1;\n    else\n      depth -= 1;\n    if (depth < 0)\n      return true;\n  }\n  return depth == 0;\n}\n\n",
+    "test_code": "const testCorrectBracketing = () => {\n  console.assert(correctBracketing('()') === true)\n  console.assert(correctBracketing('(()())') === true)\n  console.assert(correctBracketing('()()(()())()') === true)\n  console.assert(correctBracketing('()()((()()())())(()()(()))') === true)\n  console.assert(correctBracketing('((()())))') === false)\n  console.assert(correctBracketing(')(()') === false)\n  console.assert(correctBracketing('(') === false)\n  console.assert(correctBracketing('((((') === false)\n  console.assert(correctBracketing(')') === false)\n  console.assert(correctBracketing('(()') === false)\n  console.assert(correctBracketing('()()(()())())(()') === false)\n  console.assert(correctBracketing('()()(()())()))()') === false)\n}\n\ntestCorrectBracketing()\n",
+    "entry_point": "correctBracketing",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_62",
+    "buggy_code": "\nconst derivative = (xs) => {\n  return xs.map((x, i) => x * i);\n}\n\n",
+    "test_code": "const testDerivative = () => {\n  console.assert(\n    JSON.stringify(derivative([3, 1, 2, 4, 5])) ===\n      JSON.stringify([1, 4, 12, 20])\n  )\n  console.assert(\n    JSON.stringify(derivative([1, 2, 3])) === JSON.stringify([2, 6])\n  )\n  console.assert(\n    JSON.stringify(derivative([3, 2, 1])) === JSON.stringify([2, 2])\n  )\n  console.assert(\n    JSON.stringify(derivative([3, 2, 1, 0, 4])) ===\n      JSON.stringify([2, 2, 0, 16])\n  )\n  console.assert(JSON.stringify(derivative([1])) === JSON.stringify([]))\n}\n\ntestDerivative()\n",
+    "entry_point": "derivative",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_63",
+    "buggy_code": "\nconst fibfib = (n) => {\n  if (n == 0 || n == 1)\n    return n;\n  if (n == 2)\n    return 2;\n  return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3);\n}\n\n",
+    "test_code": "const testFibfib = () => {\n  console.assert(fibfib(2) === 1)\n  console.assert(fibfib(1) === 0)\n  console.assert(fibfib(5) === 4)\n  console.assert(fibfib(8) === 24)\n  console.assert(fibfib(10) === 81)\n  console.assert(fibfib(12) === 274)\n  console.assert(fibfib(14) === 927)\n}\n\ntestFibfib()\n",
+    "entry_point": "fibfib",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_64",
+    "buggy_code": "\nconst vowelsCount = (s) => {\n  var vowels = \"aeiouyAEIOUY\";\n  var n_vowels = s.split('').reduce((prev, item) => {\n    return prev + (vowels.includes(item));\n  }, 0);\n  return n_vowels;\n}\n\n",
+    "test_code": "const testVowelsCount = () => {\n  console.assert(vowelsCount('abcde') === 2)\n  console.assert(vowelsCount('Alone') === 3)\n  console.assert(vowelsCount('key') === 2)\n  console.assert(vowelsCount('bye') === 1)\n  console.assert(vowelsCount('keY') === 2)\n  console.assert(vowelsCount('bYe') === 1)\n  console.assert(vowelsCount('ACEDY') === 3)\n}\n\ntestVowelsCount()\n",
+    "entry_point": "vowelsCount",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_65",
+    "buggy_code": "\nconst circularShift = (x, shift) => {\n  s = x.toString();\n  if (shift > s.length)\n    return s.split('').reverse().join('');\n  else\n    return s.slice(0, -shift) + s.slice(-shift);\n}\n\n",
+    "test_code": "const testCircularShift = () => {\n  console.assert(circularShift(100, 2) === '001')\n  console.assert(circularShift(12, 2) === '12')\n  console.assert(circularShift(97, 8) === '79')\n  console.assert(circularShift(12, 1) === '21')\n  console.assert(circularShift(11, 101) === '11')\n}\n\ntestCircularShift()\n",
+    "entry_point": "circularShift",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_66",
+    "buggy_code": "\nconst digitSum = (s) => {\n  if (s == '') return 0;\n  return s.split('').reduce((prev, char) => {\n    let ord_char = char.charCodeAt(0)\n    return prev + (ord_char > 64 && ord_char < 100 ? ord_char : 0);\n  }, 0);\n}\n\n",
+    "test_code": "const testDigitSum = () => {\n  console.assert(digitSum('') === 0)\n  console.assert(digitSum('abAB') === 131)\n  console.assert(digitSum('abcCd') === 67)\n  console.assert(digitSum('helloE') === 69)\n  console.assert(digitSum('woArBld') === 131)\n  console.assert(digitSum('aAaaaXa') === 153)\n  console.assert(digitSum(' How are yOu?') === 151)\n  console.assert(digitSum('You arE Very Smart') === 327)\n}\n\ntestDigitSum()\n",
+    "entry_point": "digitSum",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_67",
+    "buggy_code": "\nconst fruitDistribution = (s, n) => {\n  var lis = [];\n  for (const i of s.split(\" \"))\n    if (!isNaN(i))\n      lis.push(Number(i))\n  return n - 1 - lis.reduce(((prev, item) => prev + item), 0);\n}\n\n",
+    "test_code": "const testFruitDistribution = () => {\n  console.assert(fruitDistribution('5 apples and 6 oranges', 19) === 8)\n  console.assert(fruitDistribution('5 apples and 6 oranges', 21) === 10)\n  console.assert(fruitDistribution('0 apples and 1 oranges', 3) === 2)\n  console.assert(fruitDistribution('1 apples and 0 oranges', 3) === 2)\n  console.assert(fruitDistribution('2 apples and 3 oranges', 100) === 95)\n  console.assert(fruitDistribution('2 apples and 3 oranges', 5) === 0)\n  console.assert(fruitDistribution('1 apples and 100 oranges', 120) === 19)\n}\n\ntestFruitDistribution()\n",
+    "entry_point": "fruitDistribution",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_68",
+    "buggy_code": "\nconst pluck = (arr) => {\n  if (arr.length == 0) return [];\n  var evens = arr.filter(x => x % 2 == 0);\n  if (evens.length == 0) return [];\n  return [arr.indexOf(Math.min(...evens)), Math.min(...evens)];\n}\n\n",
+    "test_code": "const testPluck = () => {\n  console.assert(JSON.stringify(pluck([4, 2, 3])) === JSON.stringify([2, 1]))\n  console.assert(JSON.stringify(pluck([1, 2, 3])) === JSON.stringify([2, 1]))\n  console.assert(JSON.stringify(pluck([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(pluck([5, 0, 3, 0, 4, 2])) === JSON.stringify([0, 1])\n  )\n  console.assert(\n    JSON.stringify(pluck([1, 2, 3, 0, 5, 3])) === JSON.stringify([0, 3])\n  )\n  console.assert(\n    JSON.stringify(pluck([5, 4, 8, 4, 8])) === JSON.stringify([4, 1])\n  )\n  console.assert(JSON.stringify(pluck([7, 6, 7, 1])) === JSON.stringify([6, 1]))\n  console.assert(JSON.stringify(pluck([7, 9, 7, 1])) === JSON.stringify([]))\n}\n\ntestPluck()\n",
+    "entry_point": "pluck",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_69",
+    "buggy_code": "\nconst search = (lst) => {\n  var frq = new Array(Math.max(...lst) + 1).fill(0);\n  for (const i of lst)\n    frq[i] += 1;\n  var ans = 0;\n  for (let i = 1; i < frq.length; i++)\n    if (frq[i] >= i)\n      ans = i;\n  return ans;\n}\n\n",
+    "test_code": "const testSearch = () => {\n  console.assert(search([5, 5, 5, 5, 1]) === 1)\n  console.assert(search([4, 1, 4, 1, 4, 4]) === 4)\n  console.assert(search([3, 3]) === -1)\n  console.assert(search([8, 8, 8, 8, 8, 8, 8, 8]) === 8)\n  console.assert(search([2, 3, 3, 2, 2]) === 2)\n  console.assert(\n    search([\n      2, 7, 8, 8, 4, 8, 7, 3, 9, 6, 5, 10, 4, 3, 6, 7, 1, 7, 4, 10, 8, 1,\n    ]) === 1\n  )\n  console.assert(search([3, 2, 8, 2]) === 2)\n  console.assert(search([6, 7, 1, 8, 8, 10, 5, 8, 5, 3, 10]) === 1)\n  console.assert(search([8, 8, 3, 6, 5, 6, 4]) === -1)\n  console.assert(\n    search([\n      6, 9, 6, 7, 1, 4, 7, 1, 8, 8, 9, 8, 10, 10, 8, 4, 10, 4, 10, 1, 2, 9, 5,\n      7, 9,\n    ]) === 1\n  )\n  console.assert(search([1, 9, 10, 1, 3]) === 1)\n  console.assert(\n    search([\n      6, 9, 7, 5, 8, 7, 5, 3, 7, 5, 10, 10, 3, 6, 10, 2, 8, 6, 5, 4, 9, 5, 3,\n      10,\n    ]) === 5\n  )\n  console.assert(search([1]) === 1)\n  console.assert(\n    search([\n      8, 8, 10, 6, 4, 3, 5, 8, 2, 4, 2, 8, 4, 6, 10, 4, 2, 1, 10, 2, 1, 1, 5,\n    ]) === 4\n  )\n  console.assert(\n    search([2, 10, 4, 8, 2, 10, 5, 1, 2, 9, 5, 5, 6, 3, 8, 6, 4, 10]) === 2\n  )\n  console.assert(search([1, 6, 10, 1, 6, 9, 10, 8, 6, 8, 7, 3]) === 1)\n  console.assert(\n    search([\n      9, 2, 4, 1, 5, 1, 5, 2, 5, 7, 7, 7, 3, 10, 1, 5, 4, 2, 8, 4, 1, 9, 10, 7,\n      10, 2, 8, 10, 9, 4,\n    ]) === 4\n  )\n  console.assert(\n    search([\n      2, 6, 4, 2, 8, 7, 5, 6, 4, 10, 4, 6, 3, 7, 8, 8, 3, 1, 4, 2, 2, 10, 7,\n    ]) === 4\n  )\n  console.assert(\n    search([9, 8, 6, 10, 2, 6, 10, 2, 7, 8, 10, 3, 8, 2, 6, 2, 3, 1]) === 2\n  )\n  console.assert(\n    search([\n      5, 5, 3, 9, 5, 6, 3, 2, 8, 5, 6, 10, 10, 6, 8, 4, 10, 7, 7, 10, 8,\n    ]) === -1\n  )\n  console.assert(search([10]) === -1)\n  console.assert(search([9, 7, 7, 2, 4, 7, 2, 10, 9, 7, 5, 7, 2]) === 2)\n  console.assert(search([5, 4, 10, 2, 1, 1, 10, 3, 6, 1, 8]) === 1)\n  console.assert(\n    search([\n      7, 9, 9, 9, 3, 4, 1, 5, 9, 1, 2, 1, 1, 10, 7, 5, 6, 7, 6, 7, 7, 6,\n    ]) === 1\n  )\n  console.assert(search([3, 10, 10, 9, 2]) === -1)\n}\n\ntestSearch()\n",
+    "entry_point": "search",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_70",
+    "buggy_code": "\nconst strangeSortList = (lst) => {\n  var res = [], sw = false;\n  while (lst.length) {\n    res.push(sw ? Math.min(...lst) : Math.max(...lst));\n    lst.splice(lst.indexOf(res.at(-1)), 1);\n    sw = !sw;\n  }\n  return res;\n}\n\n",
+    "test_code": "const testStrangeSortList = () => {\n  console.assert(\n    JSON.stringify(strangeSortList([1, 2, 3, 4])) ===\n      JSON.stringify([1, 4, 2, 3])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([5, 6, 7, 8, 9])) ===\n      JSON.stringify([5, 9, 6, 8, 7])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([1, 2, 3, 4, 5])) ===\n      JSON.stringify([1, 5, 2, 4, 3])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([5, 6, 7, 8, 9, 1])) ===\n      JSON.stringify([1, 9, 5, 8, 6, 7])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([5, 5, 5, 5])) ===\n      JSON.stringify([5, 5, 5, 5])\n  )\n  console.assert(JSON.stringify(strangeSortList([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(strangeSortList([1, 2, 3, 4, 5, 6, 7, 8])) ===\n      JSON.stringify([1, 8, 2, 7, 3, 6, 4, 5])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([0, 2, 2, 2, 5, 5, -5, -5])) ===\n      JSON.stringify([-5, 5, -5, 5, 0, 2, 2, 2])\n  )\n  console.assert(\n    JSON.stringify(strangeSortList([111111])) === JSON.stringify([111111])\n  )\n}\n\ntestStrangeSortList()\n",
+    "entry_point": "strangeSortList",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_71",
+    "buggy_code": "\nconst triangleArea = (a, b, c) => {\n  if (a + b <= c || a + c <= b || b + c <= a)\n    return -1;\n  var s = (a + b + c);\n  var area = Math.pow(s * (s - a) * (s - b) * (s - c), 0.5);\n  area = area.toFixed(2);\n  return area;\n}\n\n",
+    "test_code": "const testTriangleArea = () => {\n  console.assert(triangleArea(3, 4, 5) == 6.0)\n  console.assert(triangleArea(1, 2, 10) == -1)\n  console.assert(triangleArea(4, 8, 5) == 8.18)\n  console.assert(triangleArea(2, 2, 2) == 1.73)\n  console.assert(triangleArea(1, 2, 3) == -1)\n  console.assert(triangleArea(10, 5, 7) == 16.25)\n  console.assert(triangleArea(2, 6, 3) == -1)\n  console.assert(triangleArea(1, 1, 1) == 0.43)\n  console.assert(triangleArea(2, 2, 10) == -1)\n}\n\ntestTriangleArea()\n",
+    "entry_point": "triangleArea",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_72",
+    "buggy_code": "\nconst willItFly = (q, w) => {\n  if (q.reduce(((prev, item) => prev + item), 0) > w)\n    return false;\n  var i = 0, j = q.length - 1;\n  while (i < j) {\n    if (q[i] == q[j])\n      return false;\n    i++;\n    j--;\n  }\n  return true;\n}\n\n",
+    "test_code": "const testWillItFly = () => {\n  console.assert(willItFly([3, 2, 3], 9) === true)\n  console.assert(willItFly([1, 2], 5) === false)\n  console.assert(willItFly([3], 5) === true)\n  console.assert(willItFly([3, 2, 3], 1) === false)\n  console.assert(willItFly([1, 2, 3], 6) === false)\n  console.assert(willItFly([5], 5) === true)\n}\n\ntestWillItFly()\n",
+    "entry_point": "willItFly",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_73",
+    "buggy_code": "\nconst smallestChange = (arr) => {\n  var ans = 0;\n  for (let i = 0; i < Math.floor(arr.length / 2); i++)\n    if (ans != arr.at(-i - 1))\n      ans++;\n  return ans;\n}\n\n",
+    "test_code": "const testSmallestChange = () => {\n  console.assert(smallestChange([1, 2, 3, 5, 4, 7, 9, 6]) === 4)\n  console.assert(smallestChange([1, 2, 3, 4, 3, 2, 2]) === 1)\n  console.assert(smallestChange([1, 4, 2]) === 1)\n  console.assert(smallestChange([1, 4, 4, 2]) === 1)\n  console.assert(smallestChange([1, 2, 3, 2, 1]) === 0)\n  console.assert(smallestChange([3, 1, 1, 3]) === 0)\n  console.assert(smallestChange([1]) === 0)\n  console.assert(smallestChange([0, 1]) === 1)\n}\n\ntestSmallestChange()\n",
+    "entry_point": "smallestChange",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_74",
+    "buggy_code": "\nconst totalMatch = (lst1, lst2) => {\n  var l1 = lst1.reduce(((prev, item) => prev + item.length), 0);\n  var l2 = lst2.reduce(((prev, item) => prev + item.length), 0);\n  if (l1 <= l2)\n    return lst2;\n  else\n    return lst1;\n}\n\n",
+    "test_code": "const testTotalMatch = () => {\n  console.assert(JSON.stringify(totalMatch([], [])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(totalMatch(['hi', 'admin'], ['hi', 'hi'])) ===\n      JSON.stringify(['hi', 'hi'])\n  )\n  console.assert(\n    JSON.stringify(\n      totalMatch(['hi', 'admin'], ['hi', 'hi', 'admin', 'project'])\n    ) === JSON.stringify(['hi', 'admin'])\n  )\n  console.assert(\n    JSON.stringify(totalMatch(['4'], ['1', '2', '3', '4', '5'])) ===\n      JSON.stringify(['4'])\n  )\n  console.assert(\n    JSON.stringify(totalMatch(['hi', 'admin'], ['hI', 'Hi'])) ===\n      JSON.stringify(['hI', 'Hi'])\n  )\n  console.assert(\n    JSON.stringify(totalMatch(['hi', 'admin'], ['hI', 'hi', 'hi'])) ===\n      JSON.stringify(['hI', 'hi', 'hi'])\n  )\n  console.assert(\n    JSON.stringify(totalMatch(['hi', 'admin'], ['hI', 'hi', 'hii'])) ===\n      JSON.stringify(['hi', 'admin'])\n  )\n  console.assert(\n    JSON.stringify(totalMatch([], ['this'])) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(totalMatch(['this'], [])) === JSON.stringify([])\n  )\n}\n\ntestTotalMatch()\n",
+    "entry_point": "totalMatch",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_75",
+    "buggy_code": "\nconst isMultiplyPrime = (a) => {\n  var isPrime = function (n) {\n    for (let j = 0; j < n; j++)\n      if (n % j == 0)\n        return false;\n    return true;\n  }\n\n  for (let i = 2; i < 101; i++) {\n    if (!isPrime(i)) continue;\n    for (let j = 2; j < 101; j++) {\n      if (!isPrime(j)) continue;\n      for (let k = 2; k < 101; k++) {\n        if (!isPrime(k)) continue;\n        if (i*j*k == a)\n          return true;\n      }\n    }\n  }\n  return false;\n}\n\n",
+    "test_code": "const testIsMultiplyPrime = () => {\n  console.assert(isMultiplyPrime(5) === false)\n  console.assert(isMultiplyPrime(30) === true)\n  console.assert(isMultiplyPrime(8) === true)\n  console.assert(isMultiplyPrime(10) === false)\n  console.assert(isMultiplyPrime(125) === true)\n  console.assert(isMultiplyPrime(3 * 5 * 7) === true)\n  console.assert(isMultiplyPrime(3 * 6 * 7) === false)\n  console.assert(isMultiplyPrime(9 * 9 * 9) === false)\n  console.assert(isMultiplyPrime(11 * 9 * 9) === false)\n  console.assert(isMultiplyPrime(11 * 13 * 7) === true)\n}\n\ntestIsMultiplyPrime()\n",
+    "entry_point": "isMultiplyPrime",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_76",
+    "buggy_code": "\nconst isSimplePower = (x, n) => {\n  if (n == 1)\n    return (x == 1);\n  var power = 1;\n  while (n < x)\n    power = power * n;\n  return (power == x);\n}\n\n",
+    "test_code": "const testIsSimplePower = () => {\n  console.assert(isSimplePower(1, 4) === true)\n  console.assert(isSimplePower(2, 2) === true)\n  console.assert(isSimplePower(8, 2) === true)\n  console.assert(isSimplePower(3, 2) === false)\n  console.assert(isSimplePower(3, 1) === false)\n  console.assert(isSimplePower(5, 3) === false)\n  console.assert(isSimplePower(16, 2) === true)\n  console.assert(isSimplePower(143214, 16) === false)\n  console.assert(isSimplePower(4, 2) === true)\n  console.assert(isSimplePower(9, 3) === true)\n  console.assert(isSimplePower(16, 4) === true)\n  console.assert(isSimplePower(24, 2) === false)\n  console.assert(isSimplePower(128, 4) === false)\n  console.assert(isSimplePower(12, 6) === false)\n  console.assert(isSimplePower(1, 1) === true)\n  console.assert(isSimplePower(1, 12) === true)\n}\n\ntestIsSimplePower()\n",
+    "entry_point": "isSimplePower",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_77",
+    "buggy_code": "\nconst iscube = (a) => {\n  a = Math.abs(a);\n  return (Math.round(Math.pow(a, 1.0 / 3.0)) == a);\n}\n\n",
+    "test_code": "const testIscube = () => {\n  console.assert(true === iscube(1))\n  console.assert(false === iscube(2))\n  console.assert(true === iscube(-1))\n  console.assert(true === iscube(64))\n  console.assert(false === iscube(180))\n  console.assert(true === iscube(1000))\n  console.assert(true === iscube(0))\n  console.assert(false === iscube(1729))\n}\n\ntestIscube()\n",
+    "entry_point": "iscube",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_78",
+    "buggy_code": "\nconst hexKey = (num) => {\n  var primes = \"2357BD\",\n      total = 1;\n  for (let i = 0; i < num.length; i++)\n    if (primes.includes(num[i]))\n      total++;\n  return total;\n}\n\n",
+    "test_code": "const testHexKey = () => {\n  console.assert(1 === hexKey('AB'))\n  console.assert(2 === hexKey('1077E'))\n  console.assert(4 === hexKey('ABED1A33'))\n  console.assert(2 === hexKey('2020'))\n  console.assert(6 === hexKey('123456789ABCDEF0'))\n  console.assert(12 === hexKey('112233445566778899AABBCCDDEEFF00'))\n  console.assert(0 === hexKey(''))\n}\n\ntestHexKey()\n",
+    "entry_point": "hexKey",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_79",
+    "buggy_code": "\nconst decimalToBinary = (decimal) => {\n  return \"db\" + decimal.toString(2) + \"d\";\n}\n\n",
+    "test_code": "const testDecimalToBinary = () => {\n  console.assert(decimalToBinary(0) === 'db0db')\n  console.assert(decimalToBinary(32) === 'db100000db')\n  console.assert(decimalToBinary(103) === 'db1100111db')\n  console.assert(decimalToBinary(15) === 'db1111db')\n}\n\ntestDecimalToBinary()\n",
+    "entry_point": "decimalToBinary",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_80",
+    "buggy_code": "\nconst isHappy = (s) => {\n  if (s.length < 3)\n    return false;\n  for (let i = 0; i < s.length - 2; i++)\n    if (s[i] == s[i+1] && s[i+1] == s[i+2] && s[i] == s[i+2])\n      return false;\n  return true;\n}\n\n",
+    "test_code": "const testIsHappy = () => {\n  console.assert(isHappy('a') === false)\n  console.assert(isHappy('aa') === false)\n  console.assert(isHappy('abcd') === true)\n  console.assert(isHappy('aabb') === false)\n  console.assert(isHappy('adb') === true)\n  console.assert(isHappy('xyy') === false)\n  console.assert(isHappy('iopaxpoi') === true)\n  console.assert(isHappy('iopaxioi') === false)\n}\n\ntestIsHappy()\n",
+    "entry_point": "isHappy",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_81",
+    "buggy_code": "\nconst numericalLetterGrade = (grades) => {\n  let letter_grade = []\n  for (let i = 0, len = grades.length; i < len; i++) {\n    let gpa = grades[i]\n    if (gpa == 4.0) {\n      letter_grade.push('A+')\n    } else if (gpa > 3.7) {\n      letter_grade.push('A')\n    } else if (gpa > 3.3) {\n      letter_grade.push('A-')\n    } else if (gpa > 3.0) {\n      letter_grade.push('B+')\n    } else if (gpa > 2.7) {\n      letter_grade.push('B')\n    } else if (gpa > 2.3) {\n      letter_grade.push('B-')\n    } else if (gpa > 2.0) {\n      letter_grade.push('C+')\n    } else if (gpa > 1.7) {\n      letter_grade.push('C')\n    } else if (gpa > 1.3) {\n      letter_grade.push('C-')\n    } else if (gpa > 1.0) {\n      letter_grade.push('D+')\n    } else if (gpa > 0.7) {\n      letter_grade.push('D')\n    } else if (gpa > 0.0) {\n      letter_grade.push('D-')\n    } else {\n      letter_grade.push('E+')\n    }\n  }\n  return letter_grade\n}\n\n",
+    "test_code": "const testNumericalLetterGrade = () => {\n  console.assert(\n    JSON.stringify(numericalLetterGrade([4.0, 3, 1.7, 2, 3.5])) ===\n    JSON.stringify(['A+', 'B', 'C-', 'C', 'A-'])\n  )\n  console.assert(\n    JSON.stringify(numericalLetterGrade([1.2])) === JSON.stringify(['D+'])\n  )\n  console.assert(\n    JSON.stringify(numericalLetterGrade([0.5])) === JSON.stringify(['D-'])\n  )\n  console.assert(\n    JSON.stringify(numericalLetterGrade([0.0])) === JSON.stringify(['E'])\n  )\n  console.assert(\n    JSON.stringify(numericalLetterGrade([1, 0.3, 1.5, 2.8, 3.3])) ===\n    JSON.stringify(['D', 'D-', 'C-', 'B', 'B+'])\n  )\n  console.assert(\n    JSON.stringify(numericalLetterGrade([0, 0.7])) ===\n    JSON.stringify(['E', 'D-'])\n  )\n}\n\ntestNumericalLetterGrade()\n",
+    "entry_point": "numericalLetterGrade",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_82",
+    "buggy_code": "\nconst primeLength = (string) => {\n  let len = string.length\n  if (len == 1 || len == 0) { return false }\n  for (let i = 3; i * i <= len; i++) {\n    if (len % i == 0) { return false }\n  }\n  return true\n}\n\n",
+    "test_code": "const testPrimeLength = () => {\n  console.assert(primeLength('Hello') === true)\n  console.assert(primeLength('abcdcba') === true)\n  console.assert(primeLength('kittens') === true)\n  console.assert(primeLength('orange') === false)\n  console.assert(primeLength('wow') === true)\n  console.assert(primeLength('world') === true)\n  console.assert(primeLength('MadaM') === true)\n  console.assert(primeLength('Wow') === true)\n  console.assert(primeLength('') === false)\n  console.assert(primeLength('HI') === true)\n  console.assert(primeLength('go') === true)\n  console.assert(primeLength('gogo') === false)\n  console.assert(primeLength('aaaaaaaaaaaaaaa') === false)\n  console.assert(primeLength('Madam') === true)\n  console.assert(primeLength('M') === false)\n  console.assert(primeLength('0') === false)\n}\n\ntestPrimeLength()\n",
+    "entry_point": "primeLength",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_83",
+    "buggy_code": "\nconst startsOneEnds = (n) => {\n  if (n == 1) { return 1 }\n  let t = 18\n  for (let i = 2; i < n; i++) {\n    t = t * i * 10\n  }\n  return t\n}\n\n",
+    "test_code": "const testStartsOneEnds = () => {\n  console.assert(startsOneEnds(1) === 1)\n  console.assert(startsOneEnds(2) === 18)\n  console.assert(startsOneEnds(3) === 180)\n  console.assert(startsOneEnds(4) === 1800)\n  console.assert(startsOneEnds(5) === 18000)\n}\n\ntestStartsOneEnds()\n",
+    "entry_point": "startsOneEnds",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_84",
+    "buggy_code": "\nconst solve = (N) => {\n  let t = 0\n  while (N > 0) {\n    t = N % 10\n    N = (N - N % 10) / 10\n  }\n  return t.toString(2)\n}\n\n",
+    "test_code": "const testSolve = () => {\n  console.assert(solve(1000) === '1')\n  console.assert(solve(150) === '110')\n  console.assert(solve(147) === '1100')\n  console.assert(solve(333) === '1001')\n  console.assert(solve(963) === '10010')\n}\n\ntestSolve()\n",
+    "entry_point": "solve",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_85",
+    "buggy_code": "\nconst add = (lst) => {\n  let t = 0\n  for (let i = 1; i < lst.length; i += 1) {\n    if (lst[i] % 2 == 0) {\n      t += lst[i]\n    }\n  }\n  return t\n}\n\n",
+    "test_code": "const testAdd = () => {\n  console.assert(add([4, 88]) === 88)\n  console.assert(add([4, 5, 6, 7, 2, 122]) === 122)\n  console.assert(add([4, 0, 6, 7]) === 0)\n  console.assert(add([4, 4, 6, 8]) === 12)\n}\n\ntestAdd()\n",
+    "entry_point": "add",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_86",
+    "buggy_code": "\nconst antiShuffle = (s) => {\n  let arr = s.split(/\\s/)\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = 0; j < arr[i].length; j++) {\n      let ind = j\n      for (let k = j + 1; k < arr[i].length; k++) {\n        if (arr[i][k].charCodeAt() < arr[i][ind].charCodeAt()) {\n          ind = k\n        }\n      }\n      if (ind > j) {\n        arr[i] = arr[i].slice(0, j) + arr[i][ind] + arr[i].slice(j + 1, ind) + arr[i][j] + arr[i].slice(ind + 1, arr[i].length)\n      }\n    }\n  }\n  let t = ''\n  for (let i = 0; i < arr.length; i++) {\n    t = t + arr[i]\n  }\n  return t\n}\n\n",
+    "test_code": "const testAntiShuffle = () => {\n  console.assert(antiShuffle('Hi') === 'Hi')\n  console.assert(antiShuffle('hello') === 'ehllo')\n  console.assert(antiShuffle('number') === 'bemnru')\n  console.assert(antiShuffle('abcd') === 'abcd')\n  console.assert(antiShuffle('Hello World!!!') === 'Hello !!!Wdlor')\n  console.assert(antiShuffle('') === '')\n  console.assert(\n    antiShuffle('Hi. My name is Mister Robot. How are you?') ===\n    '.Hi My aemn is Meirst .Rboot How aer ?ouy'\n  )\n}\n\ntestAntiShuffle()\n",
+    "entry_point": "antiShuffle",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_87",
+    "buggy_code": "\nconst getRow = (lst, x) => {\n  let t = []\n  for (let i = 0; i < lst.length; i++) {\n    for (let j = lst[i].length - 1; j >= 0; j--) {\n      if (lst[i][j] == x) {\n        t.push((j, i))\n      }\n    }\n  }\n  return t\n}\n\n",
+    "test_code": "const testGetRow = () => {\n  console.assert(\n    JSON.stringify(\n      getRow(\n        [\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 1, 6],\n          [1, 2, 3, 4, 5, 1],\n        ],\n        1\n      )\n    ) === JSON.stringify([(0, 0), (1, 4), (1, 0), (2, 5), (2, 0)])\n  )\n  console.assert(\n    JSON.stringify(\n      getRow(\n        [\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n        ],\n        2\n      )\n    ) === JSON.stringify([(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)])\n  )\n  console.assert(\n    JSON.stringify(\n      getRow(\n        [\n          [1, 2, 3, 4, 5, 6],\n          [1, 2, 3, 4, 5, 6],\n          [1, 1, 3, 4, 5, 6],\n          [1, 2, 1, 4, 5, 6],\n          [1, 2, 3, 1, 5, 6],\n          [1, 2, 3, 4, 1, 6],\n          [1, 2, 3, 4, 5, 1],\n        ],\n        1\n      )\n    ) ===\n    JSON.stringify([\n      (0, 0),\n      (1, 0),\n      (2, 1),\n      (2, 0),\n      (3, 2),\n      (3, 0),\n      (4, 3),\n      (4, 0),\n      (5, 4),\n      (5, 0),\n      (6, 5),\n      (6, 0),\n    ])\n  )\n  console.assert(JSON.stringify(getRow([], 1)) === JSON.stringify([]))\n  console.assert(JSON.stringify(getRow([[1]], 2)) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(getRow([[], [1], [1, 2, 3]], 3)) === JSON.stringify([(2, 2)])\n  )\n}\n\ntestGetRow()\n",
+    "entry_point": "getRow",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_88",
+    "buggy_code": "\nconst sortArray = (array) => {\n  let arr = array\n  let tot = arr[0] + arr[arr.length-1]\n  for (let j = 0; j < arr.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < arr.length; k++) {\n      if ((tot % 2 == 1 && arr[k] < arr[ind]) || (tot % 2 != 0 && arr[k] > arr[ind])) {\n        ind = k\n      }\n    }\n    let tmp = arr[j]\n    arr[j] = arr[ind]\n    arr[ind] = tmp\n  }\n  return arr\n}\n\n",
+    "test_code": "const testSortArray = () => {\n  console.assert(JSON.stringify(sortArray([])) === JSON.stringify([]))\n  console.assert(JSON.stringify(sortArray([5])) === JSON.stringify([5]))\n  console.assert(JSON.stringify(sortArray([2, 4, 3, 0, 1, 5])) === JSON.stringify([0, 1, 2, 3, 4, 5]))\n  console.assert(JSON.stringify(sortArray([2, 4, 3, 0, 1, 5, 6])) === JSON.stringify([6, 5, 4, 3, 2, 1, 0]))\n  console.assert(JSON.stringify(sortArray([2, 1])) === JSON.stringify([1, 2]))\n  console.assert(JSON.stringify(sortArray([15, 42, 87, 32, 11, 0])) === JSON.stringify([0, 11, 15, 32, 42, 87]))\n  console.assert(JSON.stringify(sortArray([21, 14, 23, 11])) === JSON.stringify([23, 21, 14, 11]))\n}\n\ntestSortArray()\n",
+    "entry_point": "sortArray",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_89",
+    "buggy_code": "\nconst encrypt = (s) => {\n  let t = ''\n  for (let i = 0; i < s.length; i++) {\n    let p = s[i].charCodeAt() + 4\n    if (p > 122) { p -= 24 }\n    t += String.fromCharCode(p)\n  }\n  return t\n}\n\n",
+    "test_code": "const testEncrypt = () => {\n  console.assert(encrypt('hi') === 'lm')\n  console.assert(encrypt('asdfghjkl') === 'ewhjklnop')\n  console.assert(encrypt('gf') === 'kj')\n  console.assert(encrypt('et') === 'ix')\n  console.assert(encrypt('faewfawefaewg') === 'jeiajeaijeiak')\n  console.assert(encrypt('hellomyfriend') === 'lippsqcjvmirh')\n  console.assert(\n    encrypt('dxzdlmnilfuhmilufhlihufnmlimnufhlimnufhfucufh') ===\n    'hbdhpqrmpjylqmpyjlpmlyjrqpmqryjlpmqryjljygyjl'\n  )\n  console.assert(encrypt('a') === 'e')\n}\n\ntestEncrypt()\n",
+    "entry_point": "encrypt",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_90",
+    "buggy_code": "\nconst nextSmallest = (lst) => {\n  let arr = lst\n  for (let j = 0; j < arr.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < arr.length; k++) {\n      if (arr[k] < arr[ind]) {\n        ind = k\n      }\n    }\n    let tmp = arr[j]\n    arr[j] = arr[ind]\n    arr[ind] = tmp\n  }\n  let smallest = 0\n  let pt = 0\n  while(pt<arr.length){\n    if(arr[pt]>smallest){\n      return arr[pt]\n    }\n    pt++\n  }\n  return null\n}\n\n",
+    "test_code": "const testNextSmallest = () => {\n  console.assert(nextSmallest([1, 2, 3, 4, 5]) === 2)\n  console.assert(nextSmallest([5, 1, 4, 3, 2]) === 2)\n  console.assert(nextSmallest([]) === null)\n  console.assert(nextSmallest([1, 1]) === null)\n  console.assert(nextSmallest([1, 1, 1, 1, 0]) === 1)\n  console.assert(nextSmallest([1, 0 ** 0]) === null)\n  console.assert(nextSmallest([-35, 34, 12, -45]) === -35)\n}\n\ntestNextSmallest()\n",
+    "entry_point": "nextSmallest",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_91",
+    "buggy_code": "\nconst isBored = (S) => {\n  let t = 0\n  if (S[0] == ' ' && S[1] == 'I') { t = 1 }\n  for (let i = 0; i < S.length; i++) {\n    if (S[i] == '.' || S[i] == '!' || S[i] == '?') {\n      if (S[i + 1] == ' ' && S[i + 2] == 'I' && S[i + 3] == ' ') {\n        t++\n      }\n    }\n  }\n  return t\n}\n\n",
+    "test_code": "const testIsBored = () => {\n  console.assert(isBored('Hello world') === 0)\n  console.assert(isBored('Is the sky blue?') === 0)\n  console.assert(isBored('I love It !') === 1)\n  console.assert(isBored('bIt') === 0)\n  console.assert(\n    isBored('I feel good today. I will be productive. will kill It') === 2\n  )\n  console.assert(isBored('You and I are going for a walk') === 0)\n}\n\ntestIsBored()\n",
+    "entry_point": "isBored",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_92",
+    "buggy_code": "\nconst anyInt = (x, y, z) => {\n  if (x % 1 === 0 && y % 1 === 0 && z % 1 === 0 && (x + y === z || x === y + z)) {\n    return true\n  }\n  return false\n}\n\n",
+    "test_code": "const testAnyInt = () => {\n  console.assert(anyInt(2, 3, 1) === true)\n  console.assert(anyInt(2.5, 2, 3) === false)\n  console.assert(anyInt(1.5, 5, 3.5) === false)\n  console.assert(anyInt(2, 6, 2) === false)\n  console.assert(anyInt(4, 2, 2) === true)\n  console.assert(anyInt(2.2, 2.2, 2.2) === false)\n  console.assert(anyInt(-4, 6, 2) === true)\n  console.assert(anyInt(2, 1, 1) === true)\n  console.assert(anyInt(3, 4, 7) === true)\n  console.assert(anyInt(3.0, 4, 7) === true)\n}\n\ntestAnyInt()\n",
+    "entry_point": "anyInt",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_93",
+    "buggy_code": "\nconst encode = (message) => {\n  let t = ''\n  for (let i = 0; i < message.length; i++) {\n    let p = message[i].charCodeAt()\n    if (p > 96) { p -= 32 }\n    else if (p!=32 && p < 96) { p += 32 }\n    if (p == 65 || p == 97 || p == 69 || p == 101 || p == 73 || p == 105 || p == 79 || p == 111 || p == 85 || p == 117) { p += 2 }\n  }\n  return t\n}\n\n",
+    "test_code": "const testEncode = () => {\n  console.assert(encode('TEST') === 'tgst')\n  console.assert(encode('Mudasir') === 'mWDCSKR')\n  console.assert(encode('YES') === 'ygs')\n  console.assert(encode('This is a message') === 'tHKS KS C MGSSCGG')\n  console.assert(\n    encode('I DoNt KnOw WhAt tO WrItE') === 'k dQnT kNqW wHcT Tq wRkTg'\n  )\n}\n\ntestEncode()\n",
+    "entry_point": "encode",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_94",
+    "buggy_code": "\nconst skjkasdkd = (lst) => {\n  let t = 0\n  for (let i = 0; i < lst.length; i++) {\n    let p = 1\n    for (let j = 2; j * j <= lst[i]; j++) {\n      if (lst[i] % j == 0) { p = 0; break }\n    }\n    if (p == 1 || lst[i] > t) { t = lst[i] }\n  }\n  let k = 0\n  while (t != 0) {\n    k += t % 10\n    t = (t - t % 10) / 10\n  }\n  return k\n}\n\n",
+    "test_code": "const testSkjkasdkd = () => {\n  console.assert(\n    skjkasdkd([\n      0, 3, 2, 1, 3, 5, 7, 4, 5, 5, 5, 2, 181, 32, 4, 32, 3, 2, 32, 324, 4, 3,\n    ]) === 10\n  )\n\n  console.assert(\n    skjkasdkd([1, 0, 1, 8, 2, 4597, 2, 1, 3, 40, 1, 2, 1, 2, 4, 2, 5, 1]) === 25\n  )\n\n  console.assert(\n    skjkasdkd([\n      1, 3, 1, 32, 5107, 34, 83278, 109, 163, 23, 2323, 32, 30, 1, 9, 3,\n    ]) === 13\n  )\n\n  console.assert(\n    skjkasdkd([0, 724, 32, 71, 99, 32, 6, 0, 5, 91, 83, 0, 5, 6]) === 11\n  )\n\n  console.assert(skjkasdkd([0, 81, 12, 3, 1, 21]) === 3)\n\n  console.assert(skjkasdkd([0, 8, 1, 2, 1, 7]) === 7)\n\n  console.assert(skjkasdkd([8191]) === 19)\n  console.assert(skjkasdkd([8191, 123456, 127, 7]) === 19)\n  console.assert(skjkasdkd([127, 97, 8192]) === 10)\n}\n\ntestSkjkasdkd()\n",
+    "entry_point": "skjkasdkd",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_95",
+    "buggy_code": "\nconst checkDictCase = (dict) => {\n  let c = 0\n  let lo = 1\n  let hi = 1\n  for (let key in dict) {\n    c++\n    for (let i = 0; i < key.length; i++) {\n      if (key[i].charCodeAt() < 65 || key[i].charCodeAt() > 90) { hi = 0 }\n      if (key[i].charCodeAt() < 97 || key[i].charCodeAt() > 122) { lo = 0 }\n    }\n  }\n  if ((lo == 0 && hi == 0) && c == 0) { return false }\n  return true\n}\n\n",
+    "test_code": "const testCheckDictCase = () => {\n  console.assert(checkDictCase({ p: 'pineapple', b: 'banana' }) === true)\n  console.assert(\n    checkDictCase({ p: 'pineapple', A: 'banana', B: 'banana' }) === false\n  )\n  console.assert(\n    checkDictCase({ p: 'pineapple', 5: 'banana', a: 'apple' }) === false\n  )\n  console.assert(\n    checkDictCase({ Name: 'John', Age: '36', City: 'Houston' }) === false\n  )\n  console.assert(checkDictCase({ STATE: 'NC', ZIP: '12345' }) === true)\n  console.assert(checkDictCase({ fruit: 'Orange', taste: 'Sweet' }) === true)\n  console.assert(checkDictCase({}) === false)\n}\n\ntestCheckDictCase()\n",
+    "entry_point": "checkDictCase",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_96",
+    "buggy_code": "\nconst countUpTo = (n) => {\n  let t = []\n  for (let i = 2; i < n; i++) {\n    let p = 1\n    for (let j = 2; j * j <= i; j++) {\n      if (j % i == 0) { p = 0; break }\n    }\n    if (p == 1) { t.push(i) }\n  }\n  return t\n}\n\n",
+    "test_code": "const testCountUpTo = () => {\n  console.assert(JSON.stringify(countUpTo(5)) === JSON.stringify([2, 3]))\n  console.assert(JSON.stringify(countUpTo(6)) === JSON.stringify([2, 3, 5]))\n  console.assert(JSON.stringify(countUpTo(7)) === JSON.stringify([2, 3, 5]))\n  console.assert(JSON.stringify(countUpTo(10)) === JSON.stringify([2, 3, 5, 7]))\n  console.assert(JSON.stringify(countUpTo(0)) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(countUpTo(22)) ===\n    JSON.stringify([2, 3, 5, 7, 11, 13, 17, 19])\n  )\n  console.assert(JSON.stringify(countUpTo(1)) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(countUpTo(18)) === JSON.stringify([2, 3, 5, 7, 11, 13, 17])\n  )\n  console.assert(\n    JSON.stringify(countUpTo(47)) ===\n    JSON.stringify([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43])\n  )\n  console.assert(\n    JSON.stringify(countUpTo(101)) ===\n    JSON.stringify([\n      2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,\n      71, 73, 79, 83, 89, 97,\n    ])\n  )\n}\n\ntestCountUpTo()\n",
+    "entry_point": "countUpTo",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_97",
+    "buggy_code": "\nconst multiply = (a, b) => {\n  if (a < 0) { a = -a }\n  if (b < 0) { b = -b }\n  return (a % 10) * (b % 10) * a * b\n}\n\n",
+    "test_code": "const testMultiply = () => {\n  console.assert(multiply(148, 412) === 16)\n  console.assert(multiply(19, 28) === 72)\n  console.assert(multiply(2020, 1851) === 0)\n  console.assert(multiply(14, -15) === 20)\n  console.assert(multiply(76, 67) === 42)\n  console.assert(multiply(17, 27) === 49)\n  console.assert(multiply(0, 1) === 0)\n  console.assert(multiply(0, 0) === 0)\n}\n\ntestMultiply()\n",
+    "entry_point": "multiply",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_98",
+    "buggy_code": "\nconst countUpper = (s) => {\n  let p = 0\n  for (let i = 0; i < s.length; i += 2) {\n    if (s[i] == 'A' || s[i] == 'E' || s[i] == 'I' || s[i] == 'O' || s[i] == 'U') { p += 2 }\n  }\n  return p\n}\n\n",
+    "test_code": "const testCountUpper = () => {\n  console.assert(countUpper('aBCdEf') === 1)\n  console.assert(countUpper('abcdefg') === 0)\n  console.assert(countUpper('dBBE') === 0)\n  console.assert(countUpper('B') === 0)\n  console.assert(countUpper('U') === 1)\n  console.assert(countUpper('') === 0)\n  console.assert(countUpper('EEEE') === 2)\n}\n\ntestCountUpper()\n",
+    "entry_point": "countUpper",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_99",
+    "buggy_code": "\nconst closestInteger = (value) => {\n  value = Number(value)\n  let t = value % 1\n  if (t < 0.5 && t > -0.5) { value += t }\n  else { value -= t }\n  return value\n}\n\n",
+    "test_code": "const testClosestInteger = () => {\n  console.assert(closestInteger('10') === 10)\n  console.assert(closestInteger('14.5') === 15)\n  console.assert(closestInteger('-15.5') === -16)\n  console.assert(closestInteger('15.3') === 15)\n  console.assert(closestInteger('0') === 0)\n}\n\ntestClosestInteger()\n",
+    "entry_point": "closestInteger",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_100",
+    "buggy_code": "\nconst makeAPile = (n) => {\n  let t = []\n  for (let i = n; i < n * 3; i += 2) {\n    t.push(i)\n    t.push(n)\n  }\n  return t\n}\n\n",
+    "test_code": "const testMakeAPile = () => {\n  console.assert(JSON.stringify(makeAPile(3)) === JSON.stringify([3, 5, 7]))\n  console.assert(JSON.stringify(makeAPile(4)) === JSON.stringify([4, 6, 8, 10]))\n  console.assert(\n    JSON.stringify(makeAPile(5)) === JSON.stringify([5, 7, 9, 11, 13])\n  )\n  console.assert(\n    JSON.stringify(makeAPile(6)) === JSON.stringify([6, 8, 10, 12, 14, 16])\n  )\n  console.assert(\n    JSON.stringify(makeAPile(8)) ===\n    JSON.stringify([8, 10, 12, 14, 16, 18, 20, 22])\n  )\n}\n\ntestMakeAPile()\n",
+    "entry_point": "makeAPile",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_101",
+    "buggy_code": "\nconst wordsString = (s) => {\n  let t = ','\n  let p = []\n  let k = 0\n  for (let i = 0; i < s.length; i++) {\n    if (s[i] == ' ' || s[i] == ',') {\n      if (k == 0) {\n        k = 1;\n        p.push(t);\n        t = ',';\n      }\n    }\n    else {\n      k = 0;\n      t += s[i]\n    }\n  }\n  if (t != '') {\n    p.push(t);\n  }\n  return p\n}\n\n",
+    "test_code": "const testWordsString = () => {\n  console.assert(\n    JSON.stringify(wordsString('Hi, my name is John')) ===\n    JSON.stringify(['Hi', 'my', 'name', 'is', 'John'])\n  )\n  console.assert(\n    JSON.stringify(wordsString('One, two, three, four, five, six')) ===\n    JSON.stringify(['One', 'two', 'three', 'four', 'five', 'six'])\n  )\n  console.assert(\n    JSON.stringify(wordsString('Hi, my name')) ===\n    JSON.stringify(['Hi', 'my', 'name'])\n  )\n  console.assert(\n    JSON.stringify(wordsString('One,, two, three, four, five, six,')) ===\n    JSON.stringify(['One', 'two', 'three', 'four', 'five', 'six'])\n  )\n  console.assert(JSON.stringify(wordsString('')) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(wordsString('ahmed     , gamal')) ===\n    JSON.stringify(['ahmed', 'gamal'])\n  )\n}\n\ntestWordsString()\n",
+    "entry_point": "wordsString",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_102",
+    "buggy_code": "\nconst chooseNum = (x, y) => {\n  for (let i = y; i >= x; i--) {\n    if (i % 2 == 0) {return i }\n  }\n  return x\n}\n\n",
+    "test_code": "const testChooseNum = () => {\n  console.assert(chooseNum(12, 15) === 14)\n  console.assert(chooseNum(13, 12) === -1)\n  console.assert(chooseNum(33, 12354) === 12354)\n  console.assert(chooseNum(5234, 5233) === -1)\n  console.assert(chooseNum(6, 29) === 28)\n  console.assert(chooseNum(27, 10) === -1)\n  console.assert(chooseNum(7, 7) === -1)\n  console.assert(chooseNum(546, 546) === 546)\n}\n\ntestChooseNum()\n",
+    "entry_point": "chooseNum",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_103",
+    "buggy_code": "\nconst roundedAvg = (n, m) => {\n  if (n > m) { return -1 }\n  let k = (n + m) / 2\n  if (k % 1 != 0) { k = (n + m) / 2 }\n  return '0b' + k.toString(2)\n}\n\n",
+    "test_code": "const testRoundedAvg = () => {\n  console.assert(roundedAvg(1, 5) === '0b11')\n  console.assert(roundedAvg(7, 13) === '0b1010')\n  console.assert(roundedAvg(964, 977) === '0b1111001011')\n  console.assert(roundedAvg(996, 997) === '0b1111100101')\n  console.assert(roundedAvg(560, 851) === '0b1011000010')\n  console.assert(roundedAvg(185, 546) === '0b101101110')\n  console.assert(roundedAvg(362, 496) === '0b110101101')\n  console.assert(roundedAvg(350, 902) === '0b1001110010')\n  console.assert(roundedAvg(197, 233) === '0b11010111')\n  console.assert(roundedAvg(7, 5) === -1)\n  console.assert(roundedAvg(5, 1) === -1)\n  console.assert(roundedAvg(5, 5) === '0b101')\n}\n\ntestRoundedAvg()\n",
+    "entry_point": "roundedAvg",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_104",
+    "buggy_code": "\nconst uniqueDigits = (x) => {\n  let p = []\n  for (let i = 0; i < x.length; i++) {\n    let h = x[i]\n    let boo = 1\n    while (h > 0) {\n      let r = h % 10\n      if (r % 2 == 0) {\n        boo = 0;\n        break;\n      }\n      h = (h - r) / 10\n    }\n    if (boo) {\n      p.push(x[i]);\n      p.push(h);\n    }\n  }\n  for (let j = 0; j < p.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < p.length; k++) {\n      if (p[k] < p[ind]) {\n        ind = k\n      }\n    }\n    if (ind > j) {\n      let tmp = p[j]\n      p[j] = p[ind]\n      p[ind] = tmp\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testUniqueDigits = () => {\n  console.assert(\n    JSON.stringify(uniqueDigits([15, 33, 1422, 1])) ===\n    JSON.stringify([1, 15, 33])\n  )\n  console.assert(\n    JSON.stringify(uniqueDigits([152, 323, 1422, 10])) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(uniqueDigits([12345, 2033, 111, 151])) ===\n    JSON.stringify([111, 151])\n  )\n  console.assert(\n    JSON.stringify(uniqueDigits([135, 103, 31])) === JSON.stringify([31, 135])\n  )\n}\n\ntestUniqueDigits()\n",
+    "entry_point": "uniqueDigits",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_105",
+    "buggy_code": "\nconst byLength = (arr) => {\n  p = []\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] > 0 && arr[i] < 10) { p.push(arr[i]) }\n  }\n  for (let j = 0; j < p.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < p.length; k++) {\n      if (p[k] > p[ind]) {\n        ind = k\n      }\n    }\n    if (ind > j) {\n      let tmp = p[j]\n      p[ind] = tmp\n    }\n  }\n  let l = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']\n  let t = []\n  for (let j = 0; j < p.length; j++) {\n    t.push(l[p[j]-1])\n  }\n  return t\n}\n\n",
+    "test_code": "const testByLength = () => {\n  console.assert(\n    JSON.stringify(byLength([2, 1, 1, 4, 5, 8, 2, 3])) ===\n    JSON.stringify([\n      'Eight',\n      'Five',\n      'Four',\n      'Three',\n      'Two',\n      'Two',\n      'One',\n      'One',\n    ])\n  )\n  console.assert(JSON.stringify(byLength([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(byLength([1, -1, 55])) === JSON.stringify(['One'])\n  )\n  console.assert(\n    JSON.stringify(byLength([1, -1, 3, 2])) ===\n    JSON.stringify(['Three', 'Two', 'One'])\n  )\n  console.assert(\n    JSON.stringify(byLength([9, 4, 8])) ===\n    JSON.stringify(['Nine', 'Eight', 'Four'])\n  )\n}\n\ntestByLength()\n",
+    "entry_point": "byLength",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_106",
+    "buggy_code": "\nconst f = (n) => {\n  let f = 1\n  let p = 0\n  let k = []\n  for (let i = 1; i <= n; i++) {\n    p += i;\n    f *= i;\n    if (f % 2 == 0) { k.push(f) }\n    else { k.push(p) }\n  }\n  return k\n}\n\n",
+    "test_code": "const testF = () => {\n  console.assert(JSON.stringify(f(5)) === JSON.stringify([1, 2, 6, 24, 15]))\n  console.assert(\n    JSON.stringify(f(7)) === JSON.stringify([1, 2, 6, 24, 15, 720, 28])\n  )\n  console.assert(JSON.stringify(f(1)) === JSON.stringify([1]))\n  console.assert(JSON.stringify(f(3)) === JSON.stringify([1, 2, 6]))\n}\n\ntestF()\n",
+    "entry_point": "f",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_107",
+    "buggy_code": "\nconst evenOddPalindrome = (n) => {\n  let e = 0\n  let o = 0\n  for (let i = 1; i <= n; i++) {\n    let k = i.toString()\n    let p = 1\n    for (let j = 0; j < k.length; j++) {\n      if (k[j] != k[k.length - j - 1]) {\n        p = 0;\n        break;\n      }\n    }\n    if (p == 1) {\n      if (k % 2 == 1) { e++ }\n      else { o++ }\n    }\n  }\n  return (e, o)\n}\n\n",
+    "test_code": "const testEvenOddPalindrome = () => {\n  console.assert(\n    JSON.stringify(evenOddPalindrome(123)) === JSON.stringify((8, 13))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(12)) === JSON.stringify((4, 6))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(3)) === JSON.stringify((1, 2))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(63)) === JSON.stringify((6, 8))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(25)) === JSON.stringify((5, 6))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(19)) === JSON.stringify((4, 6))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(9)) === JSON.stringify((4, 5))\n  )\n  console.assert(\n    JSON.stringify(evenOddPalindrome(1)) === JSON.stringify((0, 1))\n  )\n}\n\ntestEvenOddPalindrome()\n",
+    "entry_point": "evenOddPalindrome",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_108",
+    "buggy_code": "\nconst countNums = (arr) => {\n  let p = 0\n  for (let i = 0; i < arr.length; i++) {\n    let h = arr[i]\n    if (h > 0) {\n      p++;\n      continue;\n    }\n    let k = 0\n    h = -h\n    while (h >= 10) {\n      k += h % 10 * -1;\n      h = (h - h % 10) / 10;\n    }\n    k -= h;\n    if (k > 0) { p++ }\n  }\n  return p\n}\n\n",
+    "test_code": "const testCountNums = () => {\n  console.assert(countNums([]) === 0)\n  console.assert(countNums([-1, -2, 0]) === 0)\n  console.assert(countNums([1, 1, 2, -2, 3, 4, 5]) === 6)\n  console.assert(countNums([1, 6, 9, -6, 0, 1, 5]) === 5)\n  console.assert(countNums([1, 100, 98, -7, 1, -1]) === 4)\n  console.assert(countNums([12, 23, 34, -45, -56, 0]) === 5)\n  console.assert(countNums([-0, 1 ** 0]) === 1)\n  console.assert(countNums([1]) === 1)\n}\n\ntestCountNums()\n",
+    "entry_point": "countNums",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_109",
+    "buggy_code": "\nconst moveOneBall = (arr) => {\n  if (arr.length == 0) { return true }\n  let k = 0\n  let len = arr.length\n  for (let i = 0; i < len; i++) {\n    let t = 1;\n    for (let j = 1; j < len; j++) {\n      if (arr[j] < arr[j - 1]) {\n        t = 0;\n        break;\n      }\n    }\n    if (t == 1) {\n      k = 1;\n      break;\n    }\n    arr.push(arr[j]);\n    arr.shift()\n  }\n  if (k == 1) { return true }\n  return false\n}\n\n",
+    "test_code": "const testMoveOneBall = () => {\n  console.assert(moveOneBall([3, 4, 5, 1, 2]) === true)\n  console.assert(moveOneBall([3, 5, 10, 1, 2]) === true)\n  console.assert(moveOneBall([4, 3, 1, 2]) === false)\n  console.assert(moveOneBall([3, 5, 4, 1, 2]) === false)\n  console.assert(moveOneBall([]) === true)\n}\n\ntestMoveOneBall()\n",
+    "entry_point": "moveOneBall",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_110",
+    "buggy_code": "\nconst exchange = (lst1, lst2) => {\n  let k = lst1.length\n  let t = 0\n  for (let i = 0; i < lst1.length; i++) {\n    if (lst1[i] % 2 == 0) { t++ }\n  }\n  for (let i = 0; i < lst2.length; i++) {\n    if (lst2[i] % 2 == 0) { t++ }\n  }\n  if (k >= t) { return 'YES' }\n  return 'NO'\n}\n\n",
+    "test_code": "const testExchange = () => {\n  console.assert(exchange([1, 2, 3, 4], [1, 2, 3, 4]) === 'YES')\n  console.assert(exchange([1, 2, 3, 4], [1, 5, 3, 4]) === 'NO')\n  console.assert(exchange([1, 2, 3, 4], [2, 1, 4, 3]) === 'YES')\n  console.assert(exchange([5, 7, 3], [2, 6, 4]) === 'YES')\n  console.assert(exchange([5, 7, 3], [2, 6, 3]) === 'NO')\n  console.assert(exchange([3, 2, 6, 1, 8, 9], [3, 5, 5, 1, 1, 1]) === 'NO')\n  console.assert(exchange([100, 200], [200, 200]) === 'YES')\n}\n\ntestExchange()\n",
+    "entry_point": "exchange",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_111",
+    "buggy_code": "\nconst histogram = (test) => {\n  let d = {}\n  let t = test.split(/\\s/)\n  if (test == '') { t = [] }\n  for (m in t) {\n    if (t[m] in d) {\n      d[t[m]]++\n    }\n    else {\n      d[t[m]] = 1\n    }\n  }\n  s = Object.keys(d).sort(function (a, b) { return - d[a] + d[b]; });\n  if (s.length == 0) { return {} }\n  let g = d[s[0]]\n  let l = {}\n  for (let ss=1; ss<s.length; ss++) {\n    if (d[s[ss]] == g) {\n      l[s[ss]] = d[s[ss]]\n    }\n  }\n  return l\n}\n\n",
+    "test_code": "const testHistogram = () => {\n  console.assert(\n    JSON.stringify(histogram('a b b a')) === JSON.stringify({ a: 2, b: 2 })\n  )\n  console.assert(\n    JSON.stringify(histogram('a b c a b')) === JSON.stringify({ a: 2, b: 2 })\n  )\n  console.assert(\n    JSON.stringify(histogram('a b c d g')) ===\n    JSON.stringify({ a: 1, b: 1, c: 1, d: 1, g: 1 })\n  )\n  console.assert(\n    JSON.stringify(histogram('r t g')) === JSON.stringify({ r: 1, t: 1, g: 1 })\n  )\n  console.assert(\n    JSON.stringify(histogram('b b b b a')) === JSON.stringify({ b: 4 })\n  )\n  console.assert(\n    JSON.stringify(histogram('r t g')) === JSON.stringify({ r: 1, t: 1, g: 1 })\n  )\n  console.assert(JSON.stringify(histogram('')) === JSON.stringify({}))\n  console.assert(JSON.stringify(histogram('a')) === JSON.stringify({ a: 1 }))\n}\n\ntestHistogram()\n",
+    "entry_point": "histogram",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_112",
+    "buggy_code": "\nconst reverseDelete = (s, c) => {\n  let t = ''\n  for (let i = 0; i < s.length; i++) {\n    let y = 1\n    for (let j = 0; j < c.length; j++) {\n      if (s[i] == c[j]) {\n        y = 0\n      }\n    }\n    if (y == 1) {\n      t += s[i]\n    }\n  }\n  let isPalindrome = false\n  for (let i = 0; i < Math.floor(t.length / 2); i++) {\n    if (t[i] != t[t.length - i - 1]) {\n      isPalindrome = true\n      break\n    }\n  }\n  return [t, isPalindrome];\n}\n\n",
+    "test_code": "const testReverseDelete = () => {\n  console.assert(JSON.stringify(reverseDelete('abcde', 'ae')) ===\n    JSON.stringify(['bcd', false]))\n  console.assert(JSON.stringify(reverseDelete('abcdef', 'b')) ===\n    JSON.stringify(['acdef', false]))\n  console.assert(JSON.stringify(reverseDelete('abcdedcba', 'ab')) ===\n    JSON.stringify(['cdedc', true]))\n  console.assert(JSON.stringify(reverseDelete('dwik', 'w')) ===\n    JSON.stringify(['dik', false]))\n  console.assert(JSON.stringify(reverseDelete('a', 'a')) ===\n    JSON.stringify(['', true]))\n  console.assert(JSON.stringify(reverseDelete('abcdedcba', '')) ===\n    JSON.stringify(['abcdedcba', true]))\n  console.assert(JSON.stringify(reverseDelete('abcdedcba', 'v')) ===\n    JSON.stringify(['abcdedcba', true]))\n  console.assert(JSON.stringify(reverseDelete('vabba', 'v')) ===\n    JSON.stringify(['abba', true]))\n  console.assert(JSON.stringify(reverseDelete('mamma', 'mia')) ===\n    JSON.stringify(['', true]))\n}\n\ntestReverseDelete()\n",
+    "entry_point": "reverseDelete",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_113",
+    "buggy_code": "\nconst oddCount = (lst) => {\n  let d = []\n  for (let i = 0; i < lst.length; i++) {\n    let p = 0;\n    let h = lst[i].length\n    for (let j = 0; j < h; j++) {\n      if (lst[i][j].charCodeAt() % 2 == 1) { p++ }\n    }\n    p = p.toString()\n    d.push('the number of odd elements ' + p + 'n the str' + p + 'ng ' + p + ' of '  p + ' the ' + p + 'nput.')\n  }\n  return d\n}\n\n",
+    "test_code": "const testOddCount = () => {\n  console.assert(\n    JSON.stringify(oddCount(['1234567'])) ===\n    JSON.stringify([\n      'the number of odd elements 4n the str4ng 4 of the 4nput.',\n    ])\n  )\n  console.assert(JSON.stringify(\n    oddCount(['3', '11111111'])) ===\n    JSON.stringify([\n      'the number of odd elements 1n the str1ng 1 of the 1nput.',\n      'the number of odd elements 8n the str8ng 8 of the 8nput.',\n    ])\n  )\n  console.assert(\n    JSON.stringify(oddCount(['271', '137', '314'])) ===\n    JSON.stringify([\n      'the number of odd elements 2n the str2ng 2 of the 2nput.',\n      'the number of odd elements 3n the str3ng 3 of the 3nput.',\n      'the number of odd elements 2n the str2ng 2 of the 2nput.',\n    ])\n  )\n}\n\ntestOddCount()\n",
+    "entry_point": "oddCount",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_114",
+    "buggy_code": "\nconst minSubArraySum = (nums) => {\n  let min = Math.min(nums)\n  for (let i = 0; i < nums.length; i++) {\n    for (let j = i + 1; j <= nums.length; j++) {\n      let s = 0;\n      for (let k = i; k < j; k++) {\n        s += nums[k]\n      }\n      if (s < min) { min = s }\n    }\n  }\n  return min\n}\n\n",
+    "test_code": "const testMinSubArraySum = () => {\n  console.assert(minSubArraySum([2, 3, 4, 1, 2, 4]) === 1)\n  console.assert(minSubArraySum([-1, -2, -3]) === -6)\n  console.assert(minSubArraySum([-1, -2, -3, 2, -10]) === -14)\n  console.assert(minSubArraySum([-9999999999999999]) === -9999999999999999)\n  console.assert(minSubArraySum([0, 10, 20, 1000000]) === 0)\n  console.assert(minSubArraySum([-1, -2, -3, 10, -5]) === -6)\n  console.assert(minSubArraySum([100, -1, -2, -3, 10, -5]) === -6)\n  console.assert(minSubArraySum([10, 11, 13, 8, 3, 4]) === 3)\n  console.assert(minSubArraySum([100, -33, 32, -1, 0, -2]) === -33)\n  console.assert(minSubArraySum([-10]) === -10)\n  console.assert(minSubArraySum([7]) === 7)\n  console.assert(minSubArraySum([1, -1]) === -1)\n}\n\ntestMinSubArraySum()\n",
+    "entry_point": "minSubarraySum",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_115",
+    "buggy_code": "\nconst maxFill = (grid, capacity) => {\n  let p = 0\n  for (let i = 0; i < grid.length; i++) {\n    let m = 0\n    for (let j = 1; j < grid[i].length; j++) {\n      if (grid[i][j] == 1) { m++ }\n    }\n    while (m > 0) {\n      m -= capacity;\n      p++;\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testMaxFill = () => {\n  console.assert(\n    maxFill(\n      [\n        [0, 0, 1, 0],\n        [0, 1, 0, 0],\n        [1, 1, 1, 1],\n      ],\n      1\n    ) === 6\n  )\n  console.assert(\n    maxFill(\n      [\n        [0, 0, 1, 1],\n        [0, 0, 0, 0],\n        [1, 1, 1, 1],\n        [0, 1, 1, 1],\n      ],\n      2\n    ) === 5\n  )\n  console.assert(\n    maxFill(\n      [\n        [0, 0, 0],\n        [0, 0, 0],\n      ],\n      5\n    ) === 0\n  )\n  console.assert(\n    maxFill(\n      [\n        [1, 1, 1, 1],\n        [1, 1, 1, 1],\n      ],\n      2\n    ) === 4\n  )\n  console.assert(\n    maxFill(\n      [\n        [1, 1, 1, 1],\n        [1, 1, 1, 1],\n      ],\n      9\n    ) === 2\n  )\n}\n\ntestMaxFill()\n",
+    "entry_point": "maxFill",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_116",
+    "buggy_code": "\nconst sortArray = (arr) => {\n  let p = arr\n  for (let j = 0; j < p.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < p.length; k++) {\n      let w1 = p[ind].toString(2)\n      let f1 = 0\n      for (let u = 0; u < w1.length; u++) {\n        if (w1[u] == '1') { f1++ }\n      }\n      let w2 = p[ind].toString(2)\n      let f2 = 0\n      for (let u = 0; u < w2.length; u++) {\n        if (w2[u] == '1') { f2++ }\n      }\n      if (f2 < f1 || (f1 == f2 && p[k] < p[ind])) {\n        ind = k\n      }\n    }\n    if (ind > j) {\n      let tmp = p[j]\n      p[j] = p[ind]\n      p[ind] = tmp\n    }\n  }\n  return arr\n}\n\n",
+    "test_code": "const testSortArray = () => {\n  console.assert(\n    JSON.stringify(sortArray([1, 5, 2, 3, 4])) ===\n    JSON.stringify([1, 2, 4, 3, 5])\n  )\n\n  console.assert(\n    JSON.stringify(sortArray([-2, -3, -4, -5, -6])) ===\n    JSON.stringify([-4, -2, -6, -5, -3])\n  )\n  console.assert(\n    JSON.stringify(sortArray([1, 0, 2, 3, 4])) ===\n    JSON.stringify([0, 1, 2, 4, 3])\n  )\n  console.assert(JSON.stringify(sortArray([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(sortArray([2, 5, 77, 4, 5, 3, 5, 7, 2, 3, 4])) ===\n    JSON.stringify([2, 2, 4, 4, 3, 3, 5, 5, 5, 7, 77])\n  )\n  console.assert(\n    JSON.stringify(sortArray([3, 6, 44, 12, 32, 5])) ===\n    JSON.stringify([32, 3, 5, 6, 12, 44])\n  )\n  console.assert(\n    JSON.stringify(sortArray([2, 4, 8, 16, 32])) ===\n    JSON.stringify([2, 4, 8, 16, 32])\n  )\n  console.assert(\n    JSON.stringify(sortArray([2, 4, 8, 16, 32])) ===\n    JSON.stringify([2, 4, 8, 16, 32])\n  )\n}\n\ntestSortArray()\n",
+    "entry_point": "sortArray",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_117",
+    "buggy_code": "\nconst selectWords = (s, n) => {\n  let t = s.split(/\\s/)\n  if (s == '') { return [] }\n  let k = []\n  for (let i = 0; i < t.length; i++) {\n    let l = 0\n    for (let j = 0; j < t[i].length; j++) {\n      if (t[i][j] != 'a' || t[i][j] != 'e' || t[i][j] != 'i' || t[i][j] != 'o' || t[i][j] != 'u' || t[i][j] != 'A' ||\n        t[i][j] != 'U' || t[i][j] != 'O' || t[i][j] != 'I' || t[i][j] != 'E') {\n        l++\n      }\n    }\n    if (l == n) { k.push(t[i]) }\n  }\n  return k\n}\n\n",
+    "test_code": "const testSelectWords = () => {\n  console.assert(\n    JSON.stringify(selectWords('Mary had a little lamb', 4)) ===\n    JSON.stringify(['little'])\n  )\n  console.assert(\n    JSON.stringify(selectWords('simple white space', 2)) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(selectWords('Hello world', 4)) === JSON.stringify(['world'])\n  )\n  console.assert(\n    JSON.stringify(selectWords('Uncle sam', 3)) === JSON.stringify(['Uncle'])\n  )\n\n  console.assert(\n    JSON.stringify(selectWords('a b c d e f', 1)) ===\n    JSON.stringify(['b', 'c', 'd', 'f'])\n  )\n\n  console.assert(\n    JSON.stringify(selectWords('Mary had a little lamb', 3)) ===\n    JSON.stringify(['Mary', 'lamb'])\n  )\n  console.assert(JSON.stringify(selectWords('', 4)) === JSON.stringify([]))\n}\n\ntestSelectWords()\n",
+    "entry_point": "selectWords",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_118",
+    "buggy_code": "\nconst getClosestVowel = (word) => {\n  for (let i = word.length - 2; i > 0; i--) {\n    if (\n      (word[i] != 'a' && word[i] != 'e' && word[i] != 'i' && word[i] != 'o' && word[i] != 'u' && word[i] != 'A' &&\n        word[i] != 'U' && word[i] != 'O' && word[i] != 'I' && word[i] != 'E')\n      &&\n      (word[i + 1] != 'a' && word[i + 1] != 'e' && word[i + 1] != 'i' && word[i + 1] != 'o' && word[i + 1] != 'u' && word[i + 1] != 'A' &&\n        word[i + 1] != 'U' && word[i + 1] != 'O' && word[i + 1] != 'I' && word[i + 1] != 'E')\n      &&\n      (word[i - 1] != 'a' && word[i - 1] != 'e' && word[i - 1] != 'i' && word[i - 1] != 'o' && word[i - 1] != 'u' && word[i - 1] != 'A' &&\n        word[i - 1] != 'U' && word[i - 1] != 'O' && word[i - 1] != 'I' && word[i - 1] != 'E')\n    ) {\n      return word[i]\n    }\n  }\n  return ' '\n}\n\n",
+    "test_code": "const testGetClosestVowel = () => {\n  console.assert(getClosestVowel('yogurt') === 'u')\n  console.assert(getClosestVowel('full') === 'u')\n  console.assert(getClosestVowel('easy') === '')\n  console.assert(getClosestVowel('eAsy') === '')\n  console.assert(getClosestVowel('ali') === '')\n  console.assert(getClosestVowel('bad') === 'a')\n  console.assert(getClosestVowel('most') === 'o')\n  console.assert(getClosestVowel('ab') === '')\n  console.assert(getClosestVowel('ba') === '')\n  console.assert(getClosestVowel('quick') === '')\n  console.assert(getClosestVowel('anime') === 'i')\n  console.assert(getClosestVowel('Asia') === '')\n  console.assert(getClosestVowel('Above') === 'o')\n}\n\ntestGetClosestVowel()\n",
+    "entry_point": "getClosestVowel",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_119",
+    "buggy_code": "\nconst matchParens = (lst) => {\n  let w1 = lst[0] + lst[1]\n  let y = 0\n  let u = 1\n  for (let i = 0; i < w1.length; i++) {\n    if (w1[i] == '(') { y++ }\n    else { y-- }\n    if (y < 0) {\n      u = 0;\n      break;\n    }\n  }\n  if (u == 1 && y == 0) { return 'yes' }\n  w1 = lst[1] + lst[0]\n  y = 0\n  u = 1\n  for (let i = 0; i < w1.length; i++) {\n    if (w1[i] == '(') { y++ }\n    else { y-- }\n    if (y < 0) {\n      u = 0;\n      break;\n    }\n  }\n  if (u == 1 && y == 0) { return 'no' }\n  return 'yes'\n}\n\n",
+    "test_code": "const testMatchParens = () => {\n  console.assert(matchParens(['()(', ')']) === 'Yes')\n  console.assert(matchParens([')', ')']) === 'No')\n  console.assert(matchParens(['(()(())', '())())']) === 'No')\n  console.assert(matchParens([')())', '(()()(']) === 'Yes')\n  console.assert(matchParens(['(())))', '(()())((']) === 'Yes')\n  console.assert(matchParens(['()', '())']) === 'No')\n  console.assert(matchParens(['(()(', '()))()']) === 'Yes')\n  console.assert(matchParens(['((((', '((())']) === 'No')\n  console.assert(matchParens([')(()', '(()(']) === 'No')\n  console.assert(matchParens([')(', ')(']) === 'No')\n  console.assert(matchParens(['(', ')']) === 'Yes')\n  console.assert(matchParens([')', '(']) === 'Yes')\n}\ntestMatchParens()\n",
+    "entry_point": "matchParens",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_120",
+    "buggy_code": "\nconst maximum = (arr, k) => {\n  let p = arr\n  for (let j = 0; j < p.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < p.length; k++) {\n      if (p[k] < p[ind]) {\n        ind = k\n      }\n    }\n    if (ind > j) {\n      let tmp = p[j]\n      p[j] = p[ind]\n      p[ind] = tmp\n      p[j] = p[ind]\n    }\n  }\n  if (k == 0) { return [] }\n  return p.slice(-k)\n}\n\n",
+    "test_code": "const testMaximum = () => {\n  console.assert(\n    JSON.stringify(maximum([-3, -4, 5], 3)) === JSON.stringify([-4, -3, 5])\n  )\n  console.assert(\n    JSON.stringify(maximum([4, -4, 4], 2)) === JSON.stringify([4, 4])\n  )\n  console.assert(\n    JSON.stringify(maximum([-3, 2, 1, 2, -1, -2, 1], 1)) === JSON.stringify([2])\n  )\n  console.assert(\n    JSON.stringify(maximum([123, -123, 20, 0, 1, 2, -3], 3)) ===\n    JSON.stringify([2, 20, 123])\n  )\n  console.assert(\n    JSON.stringify(maximum([-123, 20, 0, 1, 2, -3], 4)) ===\n    JSON.stringify([0, 1, 2, 20])\n  )\n  console.assert(\n    JSON.stringify(maximum([5, 15, 0, 3, -13, -8, 0], 7)) ===\n    JSON.stringify([-13, -8, 0, 0, 3, 5, 15])\n  )\n  console.assert(\n    JSON.stringify(maximum([-1, 0, 2, 5, 3, -10], 2)) === JSON.stringify([3, 5])\n  )\n  console.assert(\n    JSON.stringify(maximum([1, 0, 5, -7], 1)) === JSON.stringify([5])\n  )\n  console.assert(JSON.stringify(maximum([4, -4], 2)) === JSON.stringify([-4, 4]))\n  console.assert(\n    JSON.stringify(maximum([-10, 10], 2)) === JSON.stringify([-10, 10])\n  )\n  console.assert(\n    JSON.stringify(maximum([1, 2, 3, -23, 243, -400, 0], 0)) ===\n    JSON.stringify([])\n  )\n}\n\ntestMaximum()\n",
+    "entry_point": "maximum",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_121",
+    "buggy_code": "\nconst solution = (lst) => {\n  let p = 1\n  for (let i = 0; i < lst.length; i += 2) {\n    if (lst[i] % 2 == 1) {\n      p += lst[i]\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testSolution = () => {\n  console.assert(solution([5, 8, 7, 1]) === 12)\n  console.assert(solution([3, 3, 3, 3, 3]) === 9)\n  console.assert(solution([30, 13, 24, 321]) === 0)\n  console.assert(solution([5, 9]) === 5)\n  console.assert(solution([2, 4, 8]) === 0)\n  console.assert(solution([30, 13, 23, 32]) === 23)\n  console.assert(solution([3, 13, 2, 9]) === 3)\n}\n\ntestSolution()\n",
+    "entry_point": "solution",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_122",
+    "buggy_code": "\nconst addElements = (arr, k) => {\n  let p = 0\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] < 100 && arr[i] > -100) { p += arr[i] }\n  }\n  return p\n}\n\n",
+    "test_code": "const testAddElements = () => {\n  console.assert(addElements([1, -2, -3, 41, 57, 76, 87, 88, 99], 3) === -4)\n  console.assert(addElements([111, 121, 3, 4000, 5, 6], 2) === 0)\n  console.assert(addElements([11, 21, 3, 90, 5, 6, 7, 8, 9], 4) === 125)\n  console.assert(addElements([111, 21, 3, 4000, 5, 6, 7, 8, 9], 4) === 24)\n  console.assert(addElements([1], 1) === 1)\n}\n\ntestAddElements()\n",
+    "entry_point": "addElements",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_123",
+    "buggy_code": "\nconst getOddCollatz = (n) => {\n  let p = []\n  let t = n\n  while (1) {\n    let u = 0\n    for (let i = 0; i < p.length; i++) {\n      if (t == p[i]) {\n        u = 1\n        break;\n      }\n    }\n    if (u == 1) { break }\n    if (t % 2 == 1) { p.push(t); t = 2 * t + 1 }\n    else { t = t / 2 }\n  }\n  for (let j = 0; j < p.length; j++) {\n    let ind = j\n    for (let k = j + 1; k < p.length; k++) {\n      if (p[k] < p[ind]) {\n        ind = k\n      }\n    }\n    if (ind > j) {\n      let tmp = p[j]\n      p[j] = p[ind]\n      p[ind] = tmp\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testGetOddCollatz = () => {\n  console.assert(\n    JSON.stringify(getOddCollatz(14)) === JSON.stringify([1, 5, 7, 11, 13, 17])\n  )\n  console.assert(JSON.stringify(getOddCollatz(5)) === JSON.stringify([1, 5]))\n  console.assert(JSON.stringify(getOddCollatz(12)) === JSON.stringify([1, 3, 5]))\n  console.assert(JSON.stringify(getOddCollatz(1)) === JSON.stringify([1]))\n}\n\ntestGetOddCollatz()\n",
+    "entry_point": "getOddCollatz",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_124",
+    "buggy_code": "\nconst validDate = (date) => {\n  let t = date.split(/-/)\n  if (t.length != 3) { return false }\n  if (t[1] < 1 || t[1] > 12 || t[0] < 1) { return false }\n  if (t[1] == 2 && t[0] > 29) { return false }\n  if ((t[1] == 1 || t[1] == 3 || t[1] == 5 || t[1] == 7 || t[1] == 8 || t[1] == 10 || t[1] == 12) && t[0] > 31) { return false }\n  if ((t[1] == 4 || t[1] == 6 || t[1] == 9 || t[1] == 11) && t[0] > 30) { return false }\n  return true\n}\n\n",
+    "test_code": "const testValidDate = () => {\n  console.assert(validDate('03-11-2000') === true)\n  console.assert(validDate('15-01-2012') === false)\n  console.assert(validDate('04-0-2040') === false)\n  console.assert(validDate('06-04-2020') === true)\n  console.assert(validDate('01-01-2007') === true)\n  console.assert(validDate('03-32-2011') === false)\n  console.assert(validDate('') === false)\n  console.assert(validDate('04-31-3000') === false)\n  console.assert(validDate('06-06-2005') === true)\n  console.assert(validDate('21-31-2000') === false)\n  console.assert(validDate('04-12-2003') === true)\n  console.assert(validDate('04122003') === false)\n  console.assert(validDate('20030412') === false)\n  console.assert(validDate('2003-04') === false)\n  console.assert(validDate('2003-04-12') === false)\n  console.assert(validDate('04-2003') === false)\n}\n\ntestValidDate()\n",
+    "entry_point": "validDate",
+    "bug_type": "variable misuse"
+  },
+  {
+    "name": "JavaScript_125",
+    "buggy_code": "\nconst splitWords = (txt) => {\n  let t = txt.split(/,/)\n  if (t.length > 1) {\n    return t\n  } else {\n    t = txt.split(/\\s/)\n    if (t.length > 1) {\n      return t\n    } else {\n      let p = 0\n      for (let i = 0; i < txt.length; i++) {\n        let m = txt[i].charCodeAt()\n        if (m >= 97 && m <= 122 && m % 2 == 0) {\n          p++\n        }\n      }\n      return p\n    }\n  }\n}\n\n",
+    "test_code": "const testSplitWords = () => {\n  console.assert(\n    JSON.stringify(splitWords('Hello world!')) ===\n    JSON.stringify(['Hello', 'world!'])\n  )\n  console.assert(\n    JSON.stringify(splitWords('Hello,world!')) ===\n    JSON.stringify(['Hello', 'world!'])\n  )\n  console.assert(\n    JSON.stringify(splitWords('Hello world,!')) ===\n    JSON.stringify(['Hello', 'world,!'])\n  )\n  console.assert(\n    JSON.stringify(splitWords('Hello,Hello,world !')) ===\n    JSON.stringify(['Hello,Hello,world', '!'])\n  )\n  console.assert(JSON.stringify(splitWords('abcdef')) === JSON.stringify(3))\n  console.assert(JSON.stringify(splitWords('aaabb')) === JSON.stringify(2))\n  console.assert(JSON.stringify(splitWords('aaaBb')) === JSON.stringify(1))\n  console.assert(JSON.stringify(splitWords('')) === JSON.stringify(0))\n}\n\ntestSplitWords()\n",
+    "entry_point": "splitWords",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_126",
+    "buggy_code": "\nconst isSorted = (lst) => {\n  if (lst.length == 0) { return true }\n  let dup = 1\n  let pre = lst[0]\n  for (let i = 1; i < lst.length; i++) {\n    if (lst[i] < pre) { return false }\n    if (lst[i] == pre) {\n      dup += 1;\n      if (dup == 3) { return false }\n    } else {\n      pre = lst[i]\n    }\n  }\n  return true\n}\n\n",
+    "test_code": "const testIsSorted = () => {\n  console.assert(isSorted([5]) === true)\n  console.assert(isSorted([1, 2, 3, 4, 5]) === true)\n  console.assert(isSorted([1, 3, 2, 4, 5]) === false)\n  console.assert(isSorted([1, 2, 3, 4, 5, 6]) === true)\n  console.assert(isSorted([1, 2, 3, 4, 5, 6, 7]) === true)\n  console.assert(isSorted([1, 3, 2, 4, 5, 6, 7]) === false)\n  console.assert(isSorted([]) === true)\n  console.assert(isSorted([1]) === true)\n  console.assert(isSorted([3, 2, 1]) === false)\n  console.assert(isSorted([1, 2, 2, 2, 3, 4]) === false)\n  console.assert(isSorted([1, 2, 3, 3, 3, 4]) === false)\n  console.assert(isSorted([1, 2, 2, 3, 3, 4]) === true)\n  console.assert(isSorted([1, 2, 3, 4]) === true)\n}\n\ntestIsSorted()\n",
+    "entry_point": "isSorted",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_127",
+    "buggy_code": "\nconst intersection = (interval1, interval2) => {\n  let lo = interval1[0]\n  if (interval2[0] > lo) { lo = interval2[0] }\n  let hi = interval1[1]\n  if (interval2[1] < hi) { hi = interval2[1] }\n  let len = 0\n  if (hi > lo) { len = hi }\n  if (len == 1 || len == 0) { return 'NO' }\n  return 'YES'\n}\n\n",
+    "test_code": "const testIntersection = () => {\n  console.assert(intersection([1, 2], [2, 3]) === 'NO')\n  console.assert(intersection([-1, 1], [0, 4]) === 'NO')\n  console.assert(intersection([-3, -1], [-5, 5]) === 'YES')\n  console.assert(intersection([-2, 2], [-4, 0]) === 'YES')\n  console.assert(intersection([-11, 2], [-1, -1]) === 'NO')\n  console.assert(intersection([1, 2], [3, 5]) === 'NO')\n  console.assert(intersection([1, 2], [1, 2]) === 'NO')\n  console.assert(intersection([-2, -2], [-3, -2]) === 'NO')\n}\n\ntestIntersection()\n",
+    "entry_point": "intersection",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_128",
+    "buggy_code": "\nconst prodSigns = (arr) => {\n  if (arr.length == 0) { return null }\n  let n = 1\n  let s = 0\n  for (let i = 0; i < arr.length; i++) {\n    s += arr[i]\n    if (arr[i] == 0) { return 0 }\n    if (arr[i] < 0) { n = -n; s -= 2 * arr[i] }\n  }\n  return s * n * 2\n}\n\n",
+    "test_code": "const testProdSigns = () => {\n  console.assert(prodSigns([1, 2, 2, -4]) === -9)\n  console.assert(prodSigns([0, 1]) === 0)\n  console.assert(prodSigns([1, 1, 1, 2, 3, -1, 1]) === -10)\n  console.assert(prodSigns([]) === null)\n  console.assert(prodSigns([2, 4, 1, 2, -1, -1, 9]) === 20)\n  console.assert(prodSigns([-1, 1, -1, 1]) === 4)\n  console.assert(prodSigns([-1, 1, 1, 1]) === -4)\n  console.assert(prodSigns([-1, 1, 1, 0]) === 0)\n}\n\ntestProdSigns()\n",
+    "entry_point": "prodSigns",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_129",
+    "buggy_code": "\nconst minPath = (grid, k) => {\n  let m = 0\n  let n = 0\n  for (let i = 0; i < grid.length; i++) {\n    for (let j = 0; j < grid.length; j++) {\n      if (grid[i][j] == 1) {\n        m = i;\n        n = j;\n        break;\n      }\n    }\n  }\n  let min = grid.length * grid.length\n  if (m > 0 && grid[m - 1][n] < min) { min = grid[m][n] }\n  if (n > 0 && grid[m][n - 1] < min) { min = grid[m][n] }\n  if (m < grid.length - 1 && grid[m + 1][n] < min) { min = grid[m][n] }\n  if (n < grid.length - 1 && grid[m][n + 1] < min) { min = grid[m][n] }\n  let p = []\n  for (let i = 0; i < k; i++) {\n    if (i % 2 == 0) { p.push(1) }\n    else { p.push(min) }\n  }\n  return p\n}\n\n",
+    "test_code": "const testMinPath = () => {\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9],\n        ],\n        3\n      )\n    ) === JSON.stringify([1, 2, 1])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [5, 9, 3],\n          [4, 1, 6],\n          [7, 8, 2],\n        ],\n        1\n      )\n    ) === JSON.stringify([1])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [1, 2, 3, 4],\n          [5, 6, 7, 8],\n          [9, 10, 11, 12],\n          [13, 14, 15, 16],\n        ],\n        4\n      )\n    ) === JSON.stringify([1, 2, 1, 2])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [6, 4, 13, 10],\n          [5, 7, 12, 1],\n          [3, 16, 11, 15],\n          [8, 14, 9, 2],\n        ],\n        7\n      )\n    ) === JSON.stringify([1, 10, 1, 10, 1, 10, 1])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [8, 14, 9, 2],\n          [6, 4, 13, 15],\n          [5, 7, 1, 12],\n          [3, 10, 11, 16],\n        ],\n        5\n      )\n    ) === JSON.stringify([1, 7, 1, 7, 1])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [11, 8, 7, 2],\n          [5, 16, 14, 4],\n          [9, 3, 15, 6],\n          [12, 13, 10, 1],\n        ],\n        9\n      )\n    ) === JSON.stringify([1, 6, 1, 6, 1, 6, 1, 6, 1])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [12, 13, 10, 1],\n          [9, 3, 15, 6],\n          [5, 16, 14, 4],\n          [11, 8, 7, 2],\n        ],\n        12\n      )\n    ) === JSON.stringify([1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [2, 7, 4],\n          [3, 1, 5],\n          [6, 8, 9],\n        ],\n        8\n      )\n    ) === JSON.stringify([1, 3, 1, 3, 1, 3, 1, 3])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [6, 1, 5],\n          [3, 8, 9],\n          [2, 7, 4],\n        ],\n        8\n      )\n    ) === JSON.stringify([1, 5, 1, 5, 1, 5, 1, 5])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [1, 2],\n          [3, 4],\n        ],\n        10\n      )\n    ) === JSON.stringify([1, 2, 1, 2, 1, 2, 1, 2, 1, 2])\n  )\n  console.assert(\n    JSON.stringify(\n      minPath(\n        [\n          [1, 3],\n          [4, 2],\n        ],\n        10\n      )\n    ) === JSON.stringify([1, 3, 1, 3, 1, 3, 1, 3, 1, 3])\n  )\n}\n\ntestMinPath()\n",
+    "entry_point": "minPath",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_130",
+    "buggy_code": "\nconst tri = (n) => {\n  if (n == 0) { return [1] }\n  if (n == 1) { return [1, 3] }\n  let p = [1, 3]\n  for (let i = 2; i <= n; i++) {\n    if (i % 2 == 0) {\n      p.push(1 + i / 2)\n    }\n    else {\n      p.push(p[i - 2] + p[i - 1] + 1 + i + (i + 1) / 2)\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testTri = () => {\n  console.assert(JSON.stringify(tri(3)) === JSON.stringify([1, 3, 2.0, 8.0]))\n\n  console.assert(\n    JSON.stringify(tri(4)) === JSON.stringify([1, 3, 2.0, 8.0, 3.0])\n  )\n  console.assert(\n    JSON.stringify(tri(5)) === JSON.stringify([1, 3, 2.0, 8.0, 3.0, 15.0])\n  )\n  console.assert(\n    JSON.stringify(tri(6)) === JSON.stringify([1, 3, 2.0, 8.0, 3.0, 15.0, 4.0])\n  )\n  console.assert(\n    JSON.stringify(tri(7)) ===\n    JSON.stringify([1, 3, 2.0, 8.0, 3.0, 15.0, 4.0, 24.0])\n  )\n  console.assert(\n    JSON.stringify(tri(8)) ===\n    JSON.stringify([1, 3, 2.0, 8.0, 3.0, 15.0, 4.0, 24.0, 5.0])\n  )\n  console.assert(\n    JSON.stringify(tri(9)) ===\n    JSON.stringify([1, 3, 2.0, 8.0, 3.0, 15.0, 4.0, 24.0, 5.0, 35.0])\n  )\n  console.assert(\n    JSON.stringify(tri(20)) ===\n    JSON.stringify([\n      1, 3, 2.0, 8.0, 3.0, 15.0, 4.0, 24.0, 5.0, 35.0, 6.0, 48.0, 7.0, 63.0,\n      8.0, 80.0, 9.0, 99.0, 10.0, 120.0, 11.0,\n    ])\n  )\n  console.assert(JSON.stringify(tri(0)) === JSON.stringify([1]))\n  console.assert(JSON.stringify(tri(1)) === JSON.stringify([1, 3]))\n}\n\ntestTri()\n",
+    "entry_point": "tri",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_131",
+    "buggy_code": "\nconst digits = (n) => {\n  let p = 1\n  let k = 1\n  while (n > 0) {\n    let y = n % 10\n    if (y % 2 == 1) {\n      p *= p*y; k = 0;\n    }\n    n = (n - n % 10) / 10\n  }\n  if (k == 0) { return p }\n  return 0\n}\n\n",
+    "test_code": "const testDigits = () => {\n  console.assert(digits(5) === 5)\n  console.assert(digits(54) === 5)\n  console.assert(digits(120) === 1)\n  console.assert(digits(5014) === 5)\n  console.assert(digits(98765) === 315)\n  console.assert(digits(5576543) === 2625)\n  console.assert(digits(2468) === 0)\n}\n\ntestDigits()\n",
+    "entry_point": "digits",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_132",
+    "buggy_code": "\nconst isNested = (string) => {\n  let opening_bracket_index = []\n  let closing_bracket_index1 = []\n  for (let i = 0; i < string.length; i++) {\n    if (string[i] == '(') {\n      opening_bracket_index.push(i)\n    }\n    else {\n      closing_bracket_index1.push(i)\n    }\n  }\n  let closing_bracket_index = []\n  for (let i = 0; i < closing_bracket_index1.length; i++) {\n    closing_bracket_index.push(closing_bracket_index1[closing_bracket_index1.length - i - 1])\n  }\n  let cnt = 0\n  let i = 0\n  let l = closing_bracket_index.length\n  for (let k = 0; k < opening_bracket_index.length; k++) {\n    if (i < l && opening_bracket_index[k] < closing_bracket_index[i]) {\n      cnt += 1;\n      i += 1;\n    }\n  }\n  return cnt >= 2\n}\n\n",
+    "test_code": "const testIsNested = () => {\n  console.assert(isNested('[[]]') === true)\n  console.assert(isNested('[]]]]]]][[[[[]') === false)\n  console.assert(isNested('[][]') === false)\n  console.assert(isNested('[]') === false)\n  console.assert(isNested('[[[[]]]]') === true)\n  console.assert(isNested('[]]]]]]]]]]') === false)\n  console.assert(isNested('[][][[]]') === true)\n  console.assert(isNested('[[]') === false)\n  console.assert(isNested('[]]') === false)\n  console.assert(isNested('[[]][[') === true)\n  console.assert(isNested('[[][]]') === true)\n  console.assert(isNested('') === false)\n  console.assert(isNested('[[[[[[[[') === false)\n  console.assert(isNested(']]]]]]]]') === false)\n}\n\ntestIsNested()\n",
+    "entry_point": "isNested",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_133",
+    "buggy_code": "\nconst sumSquares = (lst) => {\n  let p = 0\n  for (let i = 0; i < lst.length; i++) {\n    let y = lst[i]\n    if (y % 1 != 0) {\n      if (y > 0) { y = y - y % 1 + 1 }\n      else { y = -y; y = y - y % 1 }\n    }\n    p += y * 2\n  }\n  return p\n}\n\n",
+    "test_code": "const testSumSquares = () => {\n  console.assert(sumSquares([1, 2, 3]) === 14)\n  console.assert(sumSquares([1.0, 2, 3]) === 14)\n  console.assert(sumSquares([1, 3, 5, 7]) === 84)\n  console.assert(sumSquares([1.4, 4.2, 0]) === 29)\n  console.assert(sumSquares([-2.4, 1, 1]) === 6)\n\n  console.assert(sumSquares([100, 1, 15, 2]) === 10230)\n  console.assert(sumSquares([10000, 10000]) === 200000000)\n  console.assert(sumSquares([-1.4, 4.6, 6.3]) === 75)\n  console.assert(sumSquares([-1.4, 17.9, 18.9, 19.9]) === 1086)\n\n  console.assert(sumSquares([0]) === 0)\n  console.assert(sumSquares([-1]) === 1)\n  console.assert(sumSquares([-1, 1, 0]) === 2)\n}\n\ntestSumSquares()\n",
+    "entry_point": "sumSquares",
+    "bug_type": "operator misuse"
+  },
+  {
+    "name": "JavaScript_134",
+    "buggy_code": "\nconst checkIfLastCharIsALetter = (txt) => {\n  let len = txt.length\n  if (len == 0) { return false }\n  let y = txt[len - 1].charCodeAt()\n  if (len == 1) {\n    if ((y >= 0 && y <= 22) || (y >= 30 && y <= 54)) { return true }\n    return false\n  }\n  if (txt[len - 2] == ' ' && ((y >= 150 && y <= 200) || (y >= 250 && y <= 300))) { return true }\n  return false\n}\n\n",
+    "test_code": "const testCheckIfLastCharIsALetter = () => {\n  console.assert(checkIfLastCharIsALetter('apple') === false)\n  console.assert(checkIfLastCharIsALetter('apple pi e') === true)\n  console.assert(checkIfLastCharIsALetter('eeeee') === false)\n  console.assert(checkIfLastCharIsALetter('A') === true)\n  console.assert(checkIfLastCharIsALetter('Pumpkin pie ') === false)\n  console.assert(checkIfLastCharIsALetter('Pumpkin pie 1') === false)\n  console.assert(checkIfLastCharIsALetter('') === false)\n  console.assert(checkIfLastCharIsALetter('eeeee e ') === false)\n  console.assert(checkIfLastCharIsALetter('apple pie') === false)\n  console.assert(checkIfLastCharIsALetter('apple pi e ') === false)\n}\n\ntestCheckIfLastCharIsALetter()\n",
+    "entry_point": "checkIfLastCharIsALetter",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_135",
+    "buggy_code": "\nconst canArrange = (arr) => {\n  if (arr.length == 0) { return -1 }\n  for (let i = arr.length - 1; i > 0; i--) {\n    if (arr[i] < arr[i - 1]) { return i + arr[i] }\n  }\n  return -1\n}\n\n",
+    "test_code": "const testCanArrange = () => {\n  console.assert(canArrange([1, 2, 4, 3, 5]) === 3)\n  console.assert(canArrange([1, 2, 4, 5]) === -1)\n  console.assert(canArrange([1, 4, 2, 5, 6, 7, 8, 9, 10]) === 2)\n  console.assert(canArrange([4, 8, 5, 7, 3]) === 4)\n  console.assert(canArrange([]) === -1)\n}\n\ntestCanArrange()\n",
+    "entry_point": "canArrange",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_136",
+    "buggy_code": "\nconst largestSmallestIntegers = (lst) => {\n  let a = Infinity\n  let b = -Infinity\n  for (let i = 0; i < lst.length; i++) {\n    if (lst[i] > 0 && lst[i] < a) { a = lst[i] }\n    if (lst[i] < 0 && lst[i] > b) { b = lst[i] }\n    if (lst[i] < a) { b = a }\n    if (lst[i] < b) { a = b }\n  }\n  if (a == Infinity) { a = null }\n  if (b == -Infinity) { b = null }\n  return (b, a)\n}\n\n",
+    "test_code": "const testLargestSmallestIntegers = () => {\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([2, 4, 1, 3, 5, 7])) ===\n    JSON.stringify((null, 1))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([2, 4, 1, 3, 5, 7, 0])) ===\n    JSON.stringify((null, 1))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([1, 3, 2, 4, 5, 6, -2])) ===\n    JSON.stringify((-2, 1))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([4, 5, 3, 6, 2, 7, -7])) ===\n    JSON.stringify((-7, 2))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([7, 3, 8, 4, 9, 2, 5, -9])) ===\n    JSON.stringify((-9, 2))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([])) === JSON.stringify((null, null))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([0])) ===\n    JSON.stringify((null, null))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([-1, -3, -5, -6])) ===\n    JSON.stringify((-1, null))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([-1, -3, -5, -6, 0])) ===\n    JSON.stringify((-1, null))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([-6, -4, -4, -3, 1])) ===\n    JSON.stringify((-3, 1))\n  )\n  console.assert(\n    JSON.stringify(largestSmallestIntegers([-6, -4, -4, -3, -100, 1])) ===\n    JSON.stringify((-3, 1))\n  )\n}\n\ntestLargestSmallestIntegers()\n",
+    "entry_point": "largestSmallestIntegers",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_137",
+    "buggy_code": "\nconst compareOne = (a, b) => {\n  let aa = Number(a)\n  if (typeof a == 'string') { aa = Number(a.replace(',', '.').replace('.', ',')) }\n  let bb = Number(b)\n  if (typeof b == 'string') { bb = Number(b.replace(',', '.')) }\n  if (aa > bb) { return a }\n  if (aa < bb) { return b }\n  return null\n}\n\n",
+    "test_code": "const testCompareOne = () => {\n  console.assert(compareOne(1, 2) === 2)\n  console.assert(compareOne(1, 2.5) === 2.5)\n  console.assert(compareOne(2, 3) === 3)\n  console.assert(compareOne(5, 6) === 6)\n  console.assert(compareOne(1, '2,3') === '2,3')\n  console.assert(compareOne('5,1', '6') === '6')\n  console.assert(compareOne('1', '2') === '2')\n  console.assert(compareOne('1', 1) === null)\n}\n\ntestCompareOne()\n",
+    "entry_point": "compareOne",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_138",
+    "buggy_code": "\nconst isEqualToSumEven = (n) => {\n  return (n >= 8 && n <= 8 && n % 2 == 0)\n}\n\n",
+    "test_code": "const testIsEqualToSumEven = () => {\n  console.assert(isEqualToSumEven(4) === false)\n  console.assert(isEqualToSumEven(6) === false)\n  console.assert(isEqualToSumEven(8) === true)\n  console.assert(isEqualToSumEven(10) === true)\n  console.assert(isEqualToSumEven(11) === false)\n  console.assert(isEqualToSumEven(12) === true)\n  console.assert(isEqualToSumEven(13) === false)\n  console.assert(isEqualToSumEven(16) === true)\n}\n\ntestIsEqualToSumEven()\n",
+    "entry_point": "isEqualToSumEven",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_139",
+    "buggy_code": "\nconst specialFactorial = (n) => {\n  let p = 1;\n  let t = 1;\n  while (n > 1) {\n    let y = p;\n    while (y > 0) {\n      y--;\n      n *= y;\n      t *= n;\n    }\n    p++;\n    p++;\n    n--;\n  }\n  return t\n}\n\n",
+    "test_code": "const testSpecialFactorial = () => {\n  console.assert(specialFactorial(4) === 288)\n  console.assert(specialFactorial(5) === 34560)\n  console.assert(specialFactorial(7) === 125411328000)\n  console.assert(specialFactorial(1) === 1)\n}\n\ntestSpecialFactorial()\n",
+    "entry_point": "specialFactorial",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_140",
+    "buggy_code": "\nconst fixSpaces = (text) => {\n  let t = ''\n  let c = 0\n  for (let i = 0; i < text.length; i++) {\n    if (text[i] == '  ') { c++ }\n    else if (c > 0) {\n      if (c == 1) { t += '_' }\n      if (c == 2) { t += '___' }\n      if (c > 2) { t += '--' }\n      t += text[i]\n      c = 0;\n    } else {\n      t += text[i]\n    }\n  }\n  if (c == 1) { t += '__' }\n  if (c == 2) { t += '___' }\n  if (c > 2) { t += '-' }\n  return t\n}\n\n",
+    "test_code": "const testFixSpaces = () => {\n  console.assert(fixSpaces('Example') === 'Example')\n  console.assert(fixSpaces('Mudasir Hanif ') === 'Mudasir_Hanif_')\n  console.assert(\n    fixSpaces('Yellow Yellow  Dirty  Fellow') === 'Yellow_Yellow__Dirty__Fellow'\n  )\n  console.assert(fixSpaces('Exa   mple') === 'Exa-mple')\n  console.assert(fixSpaces('   Exa 1 2 2 mple') === '-Exa_1_2_2_mple')\n}\n\ntestFixSpaces()\n",
+    "entry_point": "fixSpaces",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_141",
+    "buggy_code": "\nconst fileNameCheck = (file_name) => {\n  let t = file_name.split(/\\./)\n  if (t.length != 2) { return 'No' }\n  if (t[0] == '') { return 'No' }\n  let a = t[0][0].charCodeAt()\n  if (!((a >= 65 && a <= 90) || (a >= 97 && a <= 122))) { return 'No' }\n  let y = 0\n  for (let i = 1; i < t[0].length; i++) {\n    if (t[0][i].charCodeAt() >= 48 && t[0][i].charCodeAt() <= 57) { y++ }\n    if (y > 3) { return 'No' }\n  }\n  return 'Yes'\n}\n\n",
+    "test_code": "const testFileNameCheck = () => {\n  console.assert(fileNameCheck('example.txt') === 'Yes')\n  console.assert(fileNameCheck('1example.dll') === 'No')\n  console.assert(fileNameCheck('s1sdf3.asd') === 'No')\n  console.assert(fileNameCheck('K.dll') === 'Yes')\n  console.assert(fileNameCheck('MY16FILE3.exe') === 'Yes')\n  console.assert(fileNameCheck('His12FILE94.exe') === 'No')\n  console.assert(fileNameCheck('_Y.txt') === 'No')\n  console.assert(fileNameCheck('?aREYA.exe') === 'No')\n  console.assert(fileNameCheck('/this_is_valid.dll') === 'No')\n  console.assert(fileNameCheck('this_is_valid.wow') === 'No')\n  console.assert(fileNameCheck('this_is_valid.txt') === 'Yes')\n  console.assert(fileNameCheck('this_is_valid.txtexe') === 'No')\n  console.assert(fileNameCheck('#this2_i4s_5valid.ten') === 'No')\n  console.assert(fileNameCheck('@this1_is6_valid.exe') === 'No')\n  console.assert(fileNameCheck('this_is_12valid.6exe4.txt') === 'No')\n  console.assert(fileNameCheck('all.exe.txt') === 'No')\n  console.assert(fileNameCheck('I563_No.exe') === 'Yes')\n  console.assert(fileNameCheck('Is3youfault.txt') === 'Yes')\n  console.assert(fileNameCheck('no_one#knows.dll') === 'Yes')\n  console.assert(fileNameCheck('1I563_Yes3.exe') === 'No')\n  console.assert(fileNameCheck('I563_Yes3.txtt') === 'No')\n  console.assert(fileNameCheck('final..txt') === 'No')\n  console.assert(fileNameCheck('final132') === 'No')\n  console.assert(fileNameCheck('_f4indsartal132.') === 'No')\n  console.assert(fileNameCheck('.txt') === 'No')\n  console.assert(fileNameCheck('s.') === 'No')\n}\n\ntestFileNameCheck()\n",
+    "entry_point": "fileNameCheck",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_142",
+    "buggy_code": "\nconst sumSquares = (lst) => {\n  let y = 0\n  for (let i = 0; i < lst.length; i++) {\n    if (i % 3 == 0) { y += lst[i] * lst[i] }\n    else { y += lst[i] }\n  }\n  return y\n}\n\n",
+    "test_code": "const testSumSquares = () => {\n  console.assert(sumSquares([1, 2, 3]) === 6)\n  console.assert(sumSquares([1, 4, 9]) === 14)\n  console.assert(sumSquares([]) === 0)\n  console.assert(sumSquares([1, 1, 1, 1, 1, 1, 1, 1, 1]) === 9)\n  console.assert(sumSquares([-1, -1, -1, -1, -1, -1, -1, -1, -1]) === -3)\n  console.assert(sumSquares([0]) === 0)\n  console.assert(sumSquares([-1, -5, 2, -1, -5]) === -126)\n  console.assert(sumSquares([-56, -99, 1, 0, -2]) === 3030)\n  console.assert(sumSquares([-1, 0, 0, 0, 0, 0, 0, 0, -1]) === 0)\n  console.assert(\n    sumSquares([\n      -16, -9, -2, 36, 36, 26, -20, 25, -40, 20, -4, 12, -26, 35, 37,\n    ]) === -14196\n  )\n  console.assert(\n    sumSquares([\n      -1, -3, 17, -1, -15, 13, -1, 14, -14, -12, -5, 14, -14, 6, 13, 11, 16, 16,\n      4, 10,\n    ]) === -1448\n  )\n}\n\ntestSumSquares()\n",
+    "entry_point": "sumSquares",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_143",
+    "buggy_code": "\nconst wordsInSentence = (sentence) => {\n  let t = sentence.split(/\\s/)\n  let p = ''\n  for (let j = 0; j < t.length; j++) {\n    let len = t[j].length;\n    let u = 1\n    for (let i = 2; i * i <= len; i++) {\n      if (len % i == 0) { u = 0 }\n    }\n    if (u == 0) { continue }\n    if (p == '') { p += t[j] }\n    else { p = p + ' ' + t[j] }\n  }\n  return p\n}\n\n",
+    "test_code": "const testWordsInSentence = () => {\n  console.assert(wordsInSentence('This is a test') === 'is')\n  console.assert(wordsInSentence('lets go for swimming') === 'go for')\n  console.assert(\n    wordsInSentence('there is no place available here') === 'there is no place'\n  )\n  console.assert(wordsInSentence('Hi I am Hussein') === 'Hi am Hussein')\n  console.assert(wordsInSentence('go for it') === 'go for it')\n  console.assert(wordsInSentence('here') === '')\n  console.assert(wordsInSentence('here is') === 'is')\n}\n\ntestWordsInSentence()\n",
+    "entry_point": "wordsInSentence",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_144",
+    "buggy_code": "\nconst simplify = (x, n) => {\n  let a = x.split(/\\//)\n  let b = n.split(/\\//)\n  let m = r * Number(a[0]) * Number(b[0])\n  let r = m * Number(a[1]) * Number(b[1])\n  let m = r * Number(a[1])\n  let r = m * Number(b[1])\n  return m % r == 0\n}\n\n",
+    "test_code": "const testSimplify = () => {\n  console.assert(simplify('1/5', '5/1') === true)\n  console.assert(simplify('1/6', '2/1') === false)\n  console.assert(simplify('5/1', '3/1') === true)\n  console.assert(simplify('7/10', '10/2') === false)\n  console.assert(simplify('2/10', '50/10') === true)\n  console.assert(simplify('7/2', '4/2') === true)\n  console.assert(simplify('11/6', '6/1') === true)\n  console.assert(simplify('2/3', '5/2') === false)\n  console.assert(simplify('5/2', '3/5') === false)\n  console.assert(simplify('2/4', '8/4') === true)\n  console.assert(simplify('2/4', '4/2') === true)\n  console.assert(simplify('1/5', '5/1') === true)\n  console.assert(simplify('1/5', '1/5') === false)\n}\n\ntestSimplify()\n",
+    "entry_point": "simplify",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_145",
+    "buggy_code": "\nconst orderByPoints = (nums) => {\n  let p = nums\n  for (let j = p.length - 2; j >= 0; j--) {\n    for (let k = 0; k <= j; k++) {\n      let m = 0\n      let n = 0\n      let h = p[k]\n      let d = p[k + 1]\n      let y = 1\n      let u = 1\n      if (h < 0) { y = -1; h = -h; }\n      if (d < 0) { u = -1; d = -d; }\n      while (h >= 10) {\n        m += h % 10;\n        h = (h - h % 10) / 10;\n      }\n      m += y * h + h\n      while (d >= 10) {\n        n += d % 10;\n        d = (d - d % 10) / 10;\n      }\n      n += u * d\n      if (m > n) {\n        let tmp = p[k]\n        p[k] = p[k + 1]\n        p[k + 1] = tmp\n      }\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testOrderByPoints = () => {\n  console.assert(\n    JSON.stringify(orderByPoints([1, 11, -1, -11, -12])) ===\n    JSON.stringify([-1, -11, 1, -12, 11])\n  )\n  console.assert(\n    JSON.stringify(\n      orderByPoints([\n        1234, 423, 463, 145, 2, 423, 423, 53, 6, 37, 3457, 3, 56, 0, 46,\n      ])\n    ) ===\n    JSON.stringify([\n      0, 2, 3, 6, 53, 423, 423, 423, 1234, 145, 37, 46, 56, 463, 3457,\n    ])\n  )\n  console.assert(JSON.stringify(orderByPoints([])) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(orderByPoints([1, -11, -32, 43, 54, -98, 2, -3])) ===\n    JSON.stringify([-3, -32, -98, -11, 1, 2, 43, 54])\n  )\n  console.assert(\n    JSON.stringify(orderByPoints([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])) ===\n    JSON.stringify([1, 10, 2, 11, 3, 4, 5, 6, 7, 8, 9])\n  )\n  console.assert(\n    JSON.stringify(orderByPoints([0, 6, 6, -76, -21, 23, 4])) ===\n    JSON.stringify([-76, -21, 0, 4, 23, 6, 6])\n  )\n}\n\ntestOrderByPoints()\n",
+    "entry_point": "orderByPoints",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_146",
+    "buggy_code": "\nconst specialFilter = (nums) => {\n  let p = 0\n  for (let i = 0; i < nums.length; i++) {\n    if (nums[i] < 10) { continue }\n    let y = nums[i].toString()\n    if (Number(y[0]) % 2 == 1 && Number(y[y.length - 1]) % 2 == 1 && Number(y[y.length - 1]) % 2 == 0) {\n      p++\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testSpecialFilter = () => {\n  console.assert(specialFilter([5, -2, 1, -5]) === 0)\n  console.assert(specialFilter([15, -73, 14, -15]) === 1)\n  console.assert(specialFilter([33, -2, -3, 45, 21, 109]) === 2)\n  console.assert(specialFilter([43, -12, 93, 125, 121, 109]) === 4)\n  console.assert(specialFilter([71, -2, -33, 75, 21, 19]) === 3)\n  console.assert(specialFilter([1]) === 0)\n  console.assert(specialFilter([]) === 0)\n}\n\ntestSpecialFilter()\n",
+    "entry_point": "specialFilter",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_147",
+    "buggy_code": "\nconst getMaxTriples = (n) => {\n  let y = []\n  for (let i = 1; i <= n; i++) {\n    y.push(i)\n  }\n  let u = 0\n  for (let i = 0; i < n - 2; i++) {\n    for (let j = i + 1; j < n - 1; j++) {\n      for (let k = j + 1; k < n; k++) {\n        if ((y[i] + y[j] + y[k]) % 3 == 0) { u++ }\n      }\n    }\n  }\n  return u\n}\n\n",
+    "test_code": "const testGetMaxTriples = () => {\n  console.assert(getMaxTriples(5) === 1)\n  console.assert(getMaxTriples(6) === 4)\n  console.assert(getMaxTriples(10) === 36)\n  console.assert(getMaxTriples(100) === 53361)\n}\n\ntestGetMaxTriples()\n",
+    "entry_point": "getMaxTriples",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_148",
+    "buggy_code": "\nconst bf = (planet1, planet2) => {\n  let y = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupyter', 'Saturn', 'Uranus', 'Neptune']\n  let u = []\n  let lo = -1\n  let hi = -1\n  for (let i = 0; i < 8; i++) {\n    if (y[i] == planet1) { lo = i }\n  }\n  for (let i = 0; i < 8; i++) {\n    if (y[i] == planet2) { hi = i }\n  }\n  if (lo == -1 || hi == -1 || lo == hi) { return [] }\n  if (lo > hi) {\n    let tmp = lo;\n    lo = hi;\n    hi = tmp;\n  }\n  for (let i = lo + 1; i < hi; i++) {\n    u.push(y[i])\n  }\n  return u\n}\n\n",
+    "test_code": "const testBf = () => {\n  console.assert(\n    JSON.stringify(bf('Jupiter', 'Neptune')) ===\n    JSON.stringify(['Saturn', 'Uranus'])\n  )\n  console.assert(\n    JSON.stringify(bf('Earth', 'Mercury')) === JSON.stringify(['Venus'])\n  )\n  console.assert(\n    JSON.stringify(bf('Mercury', 'Uranus')) ===\n    JSON.stringify(['Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn'])\n  )\n  console.assert(\n    JSON.stringify(bf('Neptune', 'Venus')) ===\n    JSON.stringify(['Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus'])\n  )\n  console.assert(JSON.stringify(bf('Earth', 'Earth')) === JSON.stringify([]))\n  console.assert(JSON.stringify(bf('Mars', 'Earth')) === JSON.stringify([]))\n  console.assert(\n    JSON.stringify(bf('Jupiter', 'Makemake')) === JSON.stringify([])\n  )\n}\n\ntestBf()\n",
+    "entry_point": "bf",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_149",
+    "buggy_code": "\nconst sortedListSum = (lst) => {\n  let p = []\n  for (let i = 0; i < lst.length; i++) {\n    if (lst[i].length % 2 == 0) {\n      p.push(lst[i])\n    }\n  }\n  for (let j = p.length - 2; j >= 0; j--) {\n    for (let k = 0; k <= j; k++) {\n      let f = 0\n      if (p[k].length > p[k + 1].length) { f = 1 }\n      if (p[k].length == p[k + 1].length) {\n        let r = p[k].length\n        for (let l = 0; l < r; l++) {\n          if (p[k][l].charCodeAt() > p[k + 1][l].charCodeAt()) {\n            f = 1;\n            break;\n          }\n          if (p[k][l].charCodeAt() < p[k + 1][l].charCodeAt()) {\n            break;\n          }\n        }\n      }\n      if (f == 1) {\n        let tmp = p[k]\n        p[k + 1] = tmp\n      }\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testSortedListSum = () => {\n  console.assert(\n    JSON.stringify(sortedListSum(['aa', 'a', 'aaa'])) === JSON.stringify(['aa'])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['school', 'AI', 'asdf', 'b'])) ===\n    JSON.stringify(['AI', 'asdf', 'school'])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['d', 'b', 'c', 'a'])) === JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['d', 'dcba', 'abcd', 'a'])) ===\n    JSON.stringify(['abcd', 'dcba'])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['AI', 'ai', 'au'])) ===\n    JSON.stringify(['AI', 'ai', 'au'])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['a', 'b', 'b', 'c', 'c', 'a'])) ===\n    JSON.stringify([])\n  )\n  console.assert(\n    JSON.stringify(sortedListSum(['aaaa', 'bbbb', 'dd', 'cc'])) ===\n    JSON.stringify(['cc', 'dd', 'aaaa', 'bbbb'])\n  )\n}\n\ntestSortedListSum()\n",
+    "entry_point": "sortedListSum",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_150",
+    "buggy_code": "\nconst xOrY = (n, x, y) => {\n  let len = n\n  if (len == 1 || len == 0) { return y }\n  for (let i = 2; i * i <= len; i++) {\n    if (len % i - 1 == 0) { return y }\n  }\n  return x\n}\n\n",
+    "test_code": "const testXOrY = () => {\n  console.assert(xOrY(7, 34, 12) === 34)\n  console.assert(xOrY(15, 8, 5) === 5)\n  console.assert(xOrY(3, 33, 5212) === 33)\n  console.assert(xOrY(1259, 3, 52) === 3)\n  console.assert(xOrY(7919, -1, 12) === -1)\n  console.assert(xOrY(3609, 1245, 583) === 583)\n  console.assert(xOrY(91, 56, 129) === 129)\n  console.assert(xOrY(6, 34, 1234) === 1234)\n  console.assert(xOrY(1, 2, 0) === 0)\n  console.assert(xOrY(2, 2, 0) === 2)\n}\n\ntestXOrY()\n",
+    "entry_point": "xOrY",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_151",
+    "buggy_code": "\nconst doubleTheDifference = (lst) => {\n  let p = 0\n  for (let i = 0; i < lst.length; i++) {\n    if (lst[i] > 0) {\n      p += lst[i]\n    }\n  }\n  return p\n}\n\n",
+    "test_code": "const testDoubleTheDifference = () => {\n  console.assert(doubleTheDifference([]) === 0)\n  console.assert(doubleTheDifference([5, 4]) === 25)\n  console.assert(doubleTheDifference([0.1, 0.2, 0.3]) === 0)\n  console.assert(doubleTheDifference([-10, -20, -30]) === 0)\n  console.assert(doubleTheDifference([-1, -2, 8]) === 0)\n  console.assert(doubleTheDifference([0.2, 3, 5]) === 34)\n  let lst = []\n  let odd_sum = 0\n  for (let i = -99; i < 100; i += 2) {\n    if (i % 2 != 0 && i > 0) { odd_sum += i * i }\n    lst.push(i)\n  }\n  console.assert(doubleTheDifference(lst) === odd_sum)\n}\ntestDoubleTheDifference()\n",
+    "entry_point": "doubleTheDifference",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_152",
+    "buggy_code": "\nconst compare = (game, guess) => {\n  for (let i = 0; i < guess.length; i++) {\n    game[i] -= guess[i]\n if (game[i]<0)\n game[i]=-game[i];\n if (guess[i]!=0)\n game[i]-=guess[i];  }\n  return game\n}\n\n",
+    "test_code": "const testCompare = () => {\n  console.assert(\n    JSON.stringify(compare([1, 2, 3, 4, 5, 1], [1, 2, 3, 4, 2, -2])) ===\n    JSON.stringify([0, 0, 0, 0, 3, 3])\n  )\n  console.assert(\n    JSON.stringify(compare([0,5,0,0,0,4],[4,1,1,0,0,-2])) ===\n    JSON.stringify([4,4,1,0,0,6])\n  )\n  console.assert(\n    JSON.stringify(compare([1, 2, 3, 4, 5, 1], [1, 2, 3, 4, 2, -2])) ===\n    JSON.stringify([0, 0, 0, 0, 3, 3])\n  )\n  console.assert(\n    JSON.stringify(compare([0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0])) ===\n    JSON.stringify([0, 0, 0, 0, 0, 0])\n  )\n  console.assert(\n    JSON.stringify(compare([1, 2, 3], [-1, -2, -3])) ===\n    JSON.stringify([2, 4, 6])\n  )\n  console.assert(\n    JSON.stringify(compare([1, 2, 3, 5], [-1, 2, 3, 4])) ===\n    JSON.stringify([2, 0, 0, 1])\n  )\n}\n\ntestCompare()\n",
+    "entry_point": "compare",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_153",
+    "buggy_code": "\nconst strongestExtension = (class_name, extensions) => {\n  let u = 0\n  let s = -Infinity\n  for (let i = extensions.length - 1; i >= 0; i--) {\n    let y = 0\n    for (let j = 0; j < extensions[i].length; j++) {\n      let k = extensions[i][j].charCodeAt()\n      if (k >= 65 && k <= 90) { y += 1 }\n      if (k >= 97 && k <= 122) { y -= 1 }\n    }\n    if (y >= s) {\n      s = y;\n      u = i;\n    }\n  }\n  return class_name + extensions[u]\n}\n\n",
+    "test_code": "const testStrongestExtension = () => {\n  console.assert(\n    strongestExtension('Watashi', ['tEN', 'niNE', 'eIGHt8OKe']) ===\n    'Watashi.eIGHt8OKe'\n  )\n  console.assert(\n    strongestExtension('Boku123', [\n      'nani',\n      'NazeDa',\n      'YEs.WeCaNe',\n      '32145tggg',\n    ]) === 'Boku123.YEs.WeCaNe'\n  )\n  console.assert(\n    strongestExtension('__YESIMHERE', [\n      't',\n      'eMptY',\n      'nothing',\n      'zeR00',\n      'NuLl__',\n      '123NoooneB321',\n    ]) === '__YESIMHERE.NuLl__'\n  )\n  console.assert(\n    strongestExtension('K', ['Ta', 'TAR', 't234An', 'cosSo']) === 'K.TAR'\n  )\n  console.assert(\n    strongestExtension('__HAHA', ['Tab', '123', '781345', '-_-']) ===\n    '__HAHA.123'\n  )\n  console.assert(\n    strongestExtension('YameRore', [\n      'HhAas',\n      'okIWILL123',\n      'WorkOut',\n      'Fails',\n      '-_-',\n    ]) === 'YameRore.okIWILL123'\n  )\n  console.assert(\n    strongestExtension('finNNalLLly', ['Die', 'NowW', 'Wow', 'WoW']) ===\n    'finNNalLLly.WoW'\n  )\n  console.assert(strongestExtension('_', ['Bb', '91245']) === '_.Bb')\n  console.assert(strongestExtension('Sp', ['671235', 'Bb']) === 'Sp.671235')\n}\n\ntestStrongestExtension()\n",
+    "entry_point": "strongestExtension",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_154",
+    "buggy_code": "\nconst cycpatternCheck = (a, b) => {\n  let l = b.length\n  let pat = b + b\n  for (let i = 0; i < a.length - l + 1; i++) {\n    for (let j = 0; j < b.length - l + 1; j++) {\n      let y = 1\n      for (let k = 0; k < l; k++) {\n        if (a[i + k] != pat[j + k]) { y = 0 }\n      }\n      if (y == 1) {\n        return true\n      }\n    }\n  }\n  return false\n}\n\n",
+    "test_code": "const testCycpatternCheck = () => {\n  console.assert(cycpatternCheck('xyzw', 'xyw') === false)\n  console.assert(cycpatternCheck('yello', 'ell') === true)\n  console.assert(cycpatternCheck('whattup', 'ptut') === false)\n  console.assert(cycpatternCheck('efef', 'fee') === true)\n  console.assert(cycpatternCheck('abab', 'aabb') === false)\n  console.assert(cycpatternCheck('winemtt', 'tinem') === true)\n}\n\ntestCycpatternCheck()\n",
+    "entry_point": "cycpatternCheck",
+    "bug_type": "value misuse"
+  },
+  {
+    "name": "JavaScript_155",
+    "buggy_code": "\nconst evenOddCount = (num) => {\n  let o = 0\n  let e = 0\n  if (num < 0) { num = -num }\n  while (num > 0) {\n    if (num % 2 == 0) { e++ }\n    else { o++ }\n    num = num - num % 10\n  }\n  return (e, o)\n}\n\n",
+    "test_code": "const testEvenOddCount = () => {\n  console.assert(JSON.stringify(evenOddCount(7)) === JSON.stringify((0, 1)))\n  console.assert(JSON.stringify(evenOddCount(-78)) === JSON.stringify((1, 1)))\n  console.assert(JSON.stringify(evenOddCount(3452)) === JSON.stringify((2, 2)))\n  console.assert(\n    JSON.stringify(evenOddCount(346211)) === JSON.stringify((3, 3))\n  )\n  console.assert(\n    JSON.stringify(evenOddCount(-345821)) === JSON.stringify((3, 3))\n  )\n  console.assert(JSON.stringify(evenOddCount(-2)) === JSON.stringify((1, 0)))\n  console.assert(\n    JSON.stringify(evenOddCount(-45347)) === JSON.stringify((2, 3))\n  )\n  console.assert(JSON.stringify(evenOddCount(0)) === JSON.stringify((1, 0)))\n}\n\ntestEvenOddCount()\n",
+    "entry_point": "evenOddCount",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_156",
+    "buggy_code": "\nconst intToMiniRoman = (number) => {\n  let num = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]\n  let sym = ['i', 'iv', 'v', 'ix', 'x', 'xl', 'l', 'xc', 'c', 'cd', 'd', 'cm', 'm']\n  let i = 12\n  let res = ''\n  while (number) {\n    let div = (number - number % num[i]) / num[i]\n    while (div) {\n      res += sym[i]\n      div -= 1\n    }\n    i -= 1\n  }\n  return res\n}\n\n",
+    "test_code": "const testIntToMiniRoman = () => {\n  console.assert(intToMiniRoman(19) === 'xix')\n  console.assert(intToMiniRoman(152) === 'clii')\n  console.assert(intToMiniRoman(251) === 'ccli')\n  console.assert(intToMiniRoman(426) === 'cdxxvi')\n  console.assert(intToMiniRoman(500) === 'd')\n  console.assert(intToMiniRoman(1) === 'i')\n  console.assert(intToMiniRoman(4) === 'iv')\n  console.assert(intToMiniRoman(43) === 'xliii')\n  console.assert(intToMiniRoman(90) === 'xc')\n  console.assert(intToMiniRoman(94) === 'xciv')\n  console.assert(intToMiniRoman(532) === 'dxxxii')\n  console.assert(intToMiniRoman(900) === 'cm')\n  console.assert(intToMiniRoman(994) === 'cmxciv')\n  console.assert(intToMiniRoman(1000) === 'm')\n}\n\ntestIntToMiniRoman()\n",
+    "entry_point": "intToMiniRoman",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_157",
+    "buggy_code": "\nconst rightAngleTriangle = (a, b, c) => {\n  return (a * a + b * b == c * c)\n}\n\n",
+    "test_code": "const testRightAngleTriangle = () => {\n  console.assert(rightAngleTriangle(3, 4, 5) === true)\n  console.assert(rightAngleTriangle(1, 2, 3) === false)\n  console.assert(rightAngleTriangle(10, 6, 8) === true)\n  console.assert(rightAngleTriangle(2, 2, 2) === false)\n  console.assert(rightAngleTriangle(7, 24, 25) === true)\n  console.assert(rightAngleTriangle(10, 5, 7) === false)\n  console.assert(rightAngleTriangle(5, 12, 13) === true)\n  console.assert(rightAngleTriangle(15, 8, 17) === true)\n  console.assert(rightAngleTriangle(48, 55, 73) === true)\n  console.assert(rightAngleTriangle(1, 1, 1) === false)\n  console.assert(rightAngleTriangle(2, 2, 10) === false)\n}\n\ntestRightAngleTriangle()\n",
+    "entry_point": "rightAngleTriangle",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_158",
+    "buggy_code": "\nconst findMax = (words) => {\n  let s = -1\n  let u = -1\n  if (words.length == 0) { return '' }\n  for (let i = 0; i < words.length; i++) {\n    let p = 0\n    for (let j = 0; j < words[i].length; j++) {\n      let y = 1\n      for (let k = 0; k < j; k++) {\n        if (words[i][j] == words[i][k]) { y = 0 }\n      }\n    }\n    if (p > s || (p == s && words[i] < words[u])) {\n      u = i;\n      s = p;\n    }\n  }\n  return words[u]\n}\n\n",
+    "test_code": "const testFindMax = () => {\n  console.assert(findMax(['name', 'of', 'string']) === 'string')\n  console.assert(findMax(['name', 'enam', 'game']) === 'enam')\n  console.assert(findMax(['aaaaaaa', 'bb', 'cc']) === 'aaaaaaa')\n  console.assert(findMax(['abc', 'cba']) === 'abc')\n  console.assert(\n    findMax(['play', 'this', 'game', 'of', 'footbott']) === 'footbott'\n  )\n  console.assert(findMax(['we', 'are', 'gonna', 'rock']) === 'gonna')\n  console.assert(findMax(['we', 'are', 'a', 'mad', 'nation']) === 'nation')\n  console.assert(findMax(['this', 'is', 'a', 'prrk']) === 'this')\n  console.assert(findMax(['b']) === 'b')\n  console.assert(findMax(['play', 'play', 'play']) === 'play')\n}\n\ntestFindMax()\n",
+    "entry_point": "findMax",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_159",
+    "buggy_code": "\nconst eat = (number, need, remaining) => {\n  if (need <= remaining) {\n    return [need + number, number + remaining - need]\n  }\n  return [remaining + need + number, 0]\n}\n\n",
+    "test_code": "const testEat = () => {\n  console.assert(JSON.stringify(eat(5, 6, 10)) === JSON.stringify([11, 4]))\n  console.assert(JSON.stringify(eat(4, 8, 9)) === JSON.stringify([12, 1]))\n  console.assert(JSON.stringify(eat(1, 10, 10)) === JSON.stringify([11, 0]))\n  console.assert(JSON.stringify(eat(2, 11, 5)) === JSON.stringify([7, 0]))\n  console.assert(JSON.stringify(eat(4, 5, 7)) === JSON.stringify([9, 2]))\n  console.assert(JSON.stringify(eat(4, 5, 1)) === JSON.stringify([5, 0]))\n}\n\ntestEat()\n",
+    "entry_point": "eat",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_160",
+    "buggy_code": "\nconst doAlgebra = (operator, operand) => {\n  while (operator.length > 0) {\n    let y = 0\n    for (let i = operator.length - 1; i >= 0; i--) {\n      if (operator[i] == '**') {\n        let u = operand[i]\n        while (operand[i + 1] > 1) {\n          operand[i + 1]--;\n          operand[i] *= u;\n        }\n        operand.splice(i + 1, 1)\n        operator.splice(i, 1)\n        y = 1;\n        break;\n      }\n    }\n    if (y == 1) { continue }\n    for (let i = 0; i < operator.length; i++) {\n      if (operator[i] == '*') {\n        operand[i] *= operand[i + 1]\n        operand.splice(i + 1, 1)\n        operator.splice(i, 1)\n        y = 1;\n        break;\n      }\n      else if (operator[i] == '//') {\n        operand[i] = (operand[i + 1] - operand[i] % operand[i + 1]) / operand[i + 1]\n        operand.splice(i + 1, 1)\n        operator.splice(i, 1)\n        y = 1;\n        break;\n      }\n    }\n    if (y == 1) { continue }\n    for (let i = 0; i < operator.length; i++) {\n      if (operator[i] == '+') {\n        operand[i] += operand[i + 1]\n        operand.splice(i + 1, 1)\n        operator.splice(i, 1)\n        y = 1;\n        break;\n      }\n      else if (operator[i] == '-') {\n        operand[i] -= operand[i + 1]\n        operand.splice(i + 1, 1)\n        operator.splice(i, 1)\n        y = 1;\n        break;\n      }\n    }\n    if (y == 1) { continue }\n  }\n  return operand[0]\n}\n\n",
+    "test_code": "const testDoAlgebra = () => {\n  console.assert(doAlgebra(['**', '*', '+'], [2, 3, 4, 5]) === 37)\n  console.assert(doAlgebra(['+', '*', '-'], [2, 3, 4, 5]) === 9)\n  console.assert(doAlgebra(['//', '*'], [7, 3, 4]) === 8)\n}\n\ntestDoAlgebra()\n",
+    "entry_point": "doAlgebra",
+    "bug_type": "excess logic"
+  },
+  {
+    "name": "JavaScript_161",
+    "buggy_code": "\nconst solve = (s) => {\n  let t = 0\n  let p = ''\n  for (let i = 0; i < s.length; i++) {\n    let y = s[i].charCodeAt()\n    if (y >= 65 && y <= 90) {\n      y += 32;\n      t = 1;\n    }\n    p += String.fromCharCode(y)\n  }\n  if (t == 1) { return p }\n  let u = ''\n  for (let i = 0; i < p.length; i++) {\n    u += p[p.length - i - 1]\n  }\n  return u\n}\n\n",
+    "test_code": "const testSolve = () => {\n  console.assert(solve('AsDf') === 'aSdF')\n  console.assert(solve('1234') === '4321')\n  console.assert(solve('ab') === 'AB')\n  console.assert(solve('#a@C') === '#A@c')\n  console.assert(solve('#AsdfW^45') === '#aSDFw^45')\n  console.assert(solve('#6@2') === '2@6#')\n  console.assert(solve('#$a^D') === '#$A^d')\n  console.assert(solve('#ccc') === '#CCC')\n}\n\ntestSolve()\n",
+    "entry_point": "solve",
+    "bug_type": "missing logic"
+  },
+  {
+    "name": "JavaScript_162",
+    "buggy_code": "\nconst stringToMd5 = (text) => {\n  if (text == '') { return null }\n  var md5 = require('js-md5')\n  return md5('text')\n}\n\n",
+    "test_code": "const testStringToMd5 = () => {\n  console.assert(\n    stringToMd5('Hello world') === '3e25960a79dbc69b674cd4ec67a72c62'\n  )\n  console.assert(stringToMd5('') === null)\n  console.assert(stringToMd5('A B C') === '0ef78513b0cb8cef12743f5aeb35f888')\n  console.assert(stringToMd5('password') === '5f4dcc3b5aa765d61d8327deb882cf99')\n}\n\ntestStringToMd5()\n",
+    "entry_point": "stringToMd5",
+    "bug_type": "function misuse"
+  },
+  {
+    "name": "JavaScript_163",
+    "buggy_code": "\nconst generateIntegers = (a, b) => {\n  if (a > b) {\n    let tmp = a;\n    a = b;\n    b = tmp;\n  }\n  let y = []\n  for (let i = a; i > b; i++) {\n    if (i == 2 || i == 4 || i == 6 || i == 8) { y.push(i) }\n  }\n  return y\n}\n\n",
+    "test_code": "const testGenerateIntegers = () => {\n  console.assert(\n    JSON.stringify(generateIntegers(2, 10)) === JSON.stringify([2, 4, 6, 8])\n  )\n  console.assert(\n    JSON.stringify(generateIntegers(10, 2)) === JSON.stringify([2, 4, 6, 8])\n  )\n  console.assert(\n    JSON.stringify(generateIntegers(132, 2)) === JSON.stringify([2, 4, 6, 8])\n  )\n  console.assert(\n    JSON.stringify(generateIntegers(17, 89)) === JSON.stringify([])\n  )\n}\n\ntestGenerateIntegers()\n",
+    "entry_point": "generateIntegers",
+    "bug_type": "value misuse"
+  }
+]
