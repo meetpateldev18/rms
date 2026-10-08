@@ -13,6 +13,20 @@ env/
 # results/*.csv
 # results/*.json
 
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.nav
+*.snm
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+missfont.log
+
 # OS
 .DS_Store
 Thumbs.db

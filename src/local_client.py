@@ -29,7 +29,7 @@ class LocalClient:
                 f"Start it with: brew services start ollama"
             )
 
-    def generate(self, prompt: str, max_retries: int = 3) -> str:
+    def generate(self, prompt: str, max_retries: int = 3, temperature: float = 0.2) -> str:
         """Send a prompt to the local model and return the text response."""
         prompt_preview = prompt[:100].replace('\n', ' ')
         print(f"\n  [LocalClient] === Call #{self.total_calls + 1} ===")
@@ -48,7 +48,7 @@ class LocalClient:
                         "prompt": prompt,
                         "stream": False,
                         "options": {
-                            "temperature": 0.2,
+                            "temperature": temperature,
                             "num_predict": 2048,
                         },
                     },

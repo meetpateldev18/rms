@@ -68,7 +68,7 @@ class GeminiClient:
         print(f"  [GeminiClient] All {len(self.keys)} keys are quota-exhausted.")
         return False
 
-    def generate(self, prompt: str, max_retries: int = 4) -> str:
+    def generate(self, prompt: str, max_retries: int = 4, temperature: float = 0.2) -> str:
         """Send a prompt to Gemini and return the text response."""
         self._rate_limit()
 
@@ -87,7 +87,7 @@ class GeminiClient:
                     model=self.model,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.2,
+                        temperature=temperature,
                         max_output_tokens=2048,
                     ),
                 )

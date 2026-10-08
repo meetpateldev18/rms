@@ -3,3 +3,7 @@ matplotlib
 python-dotenv
 requests
 datasets
+numpy
+pandas
+scikit-learn
+joblib

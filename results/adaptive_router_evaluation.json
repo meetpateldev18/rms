@@ -1,0 +1,73 @@
+{
+  "n_problems": 303,
+  "n_folds": 5,
+  "router": {
+    "accuracy": 0.838,
+    "precision_needs_multiagent": 0.256,
+    "recall_needs_multiagent": 0.132,
+    "f1_needs_multiagent": 0.168,
+    "positive_rate": 0.125
+  },
+  "routed": {
+    "success": 175,
+    "total": 303,
+    "success_rate": 57.8,
+    "total_llm_calls": 420,
+    "avg_llm_calls": 1.39
+  },
+  "always_baseline": {
+    "success": 171,
+    "total": 303,
+    "success_rate": 56.4,
+    "total_llm_calls": 303,
+    "avg_llm_calls": 1.0
+  },
+  "always_multiagent": {
+    "success": 172,
+    "total": 303,
+    "success_rate": 56.8,
+    "total_llm_calls": 2397,
+    "avg_llm_calls": 7.91
+  },
+  "oracle": {
+    "success": 209,
+    "total": 303,
+    "success_rate": 69.0
+  },
+  "per_dataset": {
+    "quixbugs": {
+      "n": 31,
+      "baseline_success_rate": 58.1,
+      "multiagent_success_rate": 51.6,
+      "oracle_success_rate": 77.4,
+      "routed_success_rate": 54.8,
+      "routed_avg_calls": 2.03
+    },
+    "humanevalfix": {
+      "n": 164,
+      "baseline_success_rate": 53.0,
+      "multiagent_success_rate": 54.3,
+      "oracle_success_rate": 62.2,
+      "routed_success_rate": 53.0,
+      "routed_avg_calls": 1.02
+    },
+    "debugbench": {
+      "n": 108,
+      "baseline_success_rate": 61.1,
+      "multiagent_success_rate": 62.0,
+      "oracle_success_rate": 76.9,
+      "routed_success_rate": 65.7,
+      "routed_avg_calls": 1.76
+    }
+  },
+  "feature_importances": {
+    "chars": 0.2785,
+    "cyclomatic_complexity": 0.2105,
+    "loc": 0.2051,
+    "buggy_pass_rate": 0.0922,
+    "num_tests": 0.0746,
+    "num_functions": 0.0463,
+    "dataset_humanevalfix": 0.0234,
+    "test_style_assert": 0.0229
+  }
+}

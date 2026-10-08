@@ -250,7 +250,7 @@ class PatchGenerationAgent:
     def __init__(self, llm):
         self.llm = llm
 
-    def run(self, program_name: str, buggy_code: str, debugging_info: dict, language: str = "python") -> dict:
+    def run(self, program_name: str, buggy_code: str, debugging_info: dict, language: str = "python", temperature: float = 0.2) -> dict:
         lang = _lang(language)
         fixes = debugging_info.get("fixes") or [{
             "root_cause": debugging_info.get("root_cause", "unknown"),
@@ -283,8 +283,8 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 
 IMPORTANT: In corrected_code, use \\n for newlines. Return the COMPLETE function including {lang['def_line']}, not just the fixed lines. Apply ALL listed fixes, not just the first one."""
 
-        print(f"[Agent 4] Asking LLM to generate patch...")
-        response = self.llm.generate(prompt)
+        print(f"[Agent 4] Asking LLM to generate patch (temperature={temperature})...")
+        response = self.llm.generate(prompt, temperature=temperature)
         print(f"[Agent 4] LLM response: {response[:300]}")
 
         try:

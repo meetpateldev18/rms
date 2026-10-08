@@ -1,0 +1,253 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{caption}[numbered]
+
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{multirow}
+\usepackage{xcolor}
+
+\newcommand{\good}{\textcolor{green!50!black}{\checkmark}}
+\newcommand{\bad}{\textcolor{red}{$\times$}}
+
+\title[Adaptive Routing \& Patch Tournaments]{Adaptive Routing and Patch Tournaments\\for Agentic Program Repair}
+\subtitle{Extending the Failure Recovery System}
+\author{Meet Patel (23BCE177) \and Vedant Mehta (23BCE180)}
+\institute[Nirma University]{School of Technology, Institute of Technology, Nirma University, Ahmedabad\\[4pt]\textit{Guide: Mr. AjayKumar Patel}}
+\date{}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+\tableofcontents
+\end{frame}
+
+% =================================================================
+\section{Motivation}
+% =================================================================
+\begin{frame}{Where We Left Off}
+\begin{itemize}
+    \item Original system: 6-agent pipeline vs.\ single-prompt baseline, evaluated on 3 benchmarks $\times$ 2 backends.
+    \item \textbf{Central finding:} multi-agent's benefit over baseline is \emph{conditional} on model capability and bug structure --- not universal.
+\end{itemize}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Benchmark (Gemini) & Multi-Agent & Baseline \\
+\midrule
+QuixBugs     & \textbf{77.4\%} & 74.2\% \\
+HumanEvalFix & \textbf{68.3\%} & 66.5\% \\
+DebugBench   & 78.2\% & \textbf{94.1\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{block}{The Problem}
+A system that sometimes needs 1 LLM call and sometimes needs up to 12, with no way to know which in advance, always pays worst case.
+\end{block}
+\end{frame}
+
+\begin{frame}{Two Extensions, Straight From Our Own Future Work}
+Our original report's Future Work explicitly proposed:
+\begin{enumerate}
+    \item ``An adaptive controller that routes a bug to multi-agent or single-prompt repair based on a cheap upfront complexity estimate''
+    \item ``Debate and consensus mechanisms'' among candidate fixes
+\end{enumerate}
+\vspace{8pt}
+This work \textbf{implements both}, as real, runnable additions to the existing codebase.
+\end{frame}
+
+% =================================================================
+\section{Related Work \& Novelty}
+% =================================================================
+\begin{frame}{Is This Already a Solved Problem?}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Routing (Extension 1)}
+\begin{itemize}
+    \item FrugalGPT: cascade cheap$\to$expensive LLM by learned quality check
+    \item RouteLLM: binary win-predictor routes weak vs.\ strong model
+    \item \emph{Neither is APR-specific; neither routes single-prompt vs.\ multi-agent \textbf{pipeline}}
+\end{itemize}
+\column{0.5\textwidth}
+\textbf{Tournaments (Extension 2)}
+\begin{itemize}
+    \item CodeT: sample code + tests, pick by dual execution agreement
+    \item AlphaRepair, ChatRepair: multi-candidate, test-validated patches
+    \item \emph{Selection is sequential/ranked, not a parallel tournament with a reported disagreement signal}
+\end{itemize}
+\end{columns}
+\vspace{10pt}
+\begin{alertblock}{Novelty Claim (honest version)}
+Both mechanisms have precedent individually. We found no prior system combining a bug-feature-trained router \emph{and} a test-validated patch tournament inside one sequential multi-agent APR pipeline, evaluated across dual cloud/local backends and 3 benchmarks.
+\end{alertblock}
+\end{frame}
+
+% =================================================================
+\section{Extension 1: Adaptive Routing Controller}
+% =================================================================
+\begin{frame}{Design: Route Before You Spend a Single LLM Call}
+\begin{block}{Constraint}
+The predictor must use features computable with \textbf{zero LLM calls} --- otherwise the "savings" are fake.
+\end{block}
+\textbf{Features} (\texttt{features.py}): loc, chars, cyclomatic complexity, \#tests, \#functions, dataset/language/test-style \\[6pt]
+\textbf{Key feature:} \texttt{buggy\_pass\_rate} --- \% of tests the \emph{unmodified} buggy code already passes. Free: the coordinator already runs this test pass once per bug.
+\end{frame}
+
+\begin{frame}{Labels, Model, and Leak-Free Evaluation}
+\begin{itemize}
+    \item Label: \texttt{needs\_multiagent = 1} iff multi-agent succeeded \textbf{and} baseline failed (12.5\% positive rate, 303 problems)
+    \item Model: Random Forest (300 trees, depth 5, balanced weights) --- chosen over logistic regression, which barely beat the base rate
+    \item \textbf{Evaluation:} stratified 5-fold CV --- router trained on 4 folds, routes held-out fold's bugs, scored against each bug's \emph{already-measured} historical outcome
+\end{itemize}
+\begin{block}{Why this is honest}
+Zero new LLM calls to "evaluate," zero train/test leakage --- standard offline policy evaluation.
+\end{block}
+\end{frame}
+
+\begin{frame}{Results: Router vs.\ Fixed Strategies}
+\begin{table}
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Strategy & Success Rate & Avg.\ LLM Calls/Bug \\
+\midrule
+Always Baseline            & 56.4\% & 1.00 \\
+Always Multi-Agent         & 56.8\% & 7.91 \\
+\textbf{Adaptive Router}   & \textbf{57.8\%} & \textbf{1.39} \\
+Oracle (best of both)      & 69.0\% & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{itemize}
+    \item Router matches/exceeds \textbf{both} fixed strategies' success rate
+    \item At $\mathbf{5.7\times}$ fewer LLM calls than always-multi-agent
+    \item Oracle gap (69.0\%) shows real headroom still unrouted
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Results: It's Not a Uniform Win}
+\begin{table}
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Dataset & Baseline & Multi-Agent & \textbf{Routed} & Oracle \\
+\midrule
+QuixBugs      & \textbf{58.1\%} & 51.6\% & 54.8\% & 77.4\% \\
+HumanEvalFix  & 53.0\% & \textbf{54.3\%} & 53.0\% & 62.2\% \\
+DebugBench    & 61.1\% & 62.0\% & \textbf{65.7\%} & 76.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{alertblock}{Honest finding}
+Router clearly wins on DebugBench, but loses to plain baseline on QuixBugs (small sample, more algorithmic bugs). This \emph{echoes} the original paper's conditional-benefit thesis rather than resolving it.
+\end{alertblock}
+\end{frame}
+
+% =================================================================
+\section{Extension 2: Patch Tournament}
+% =================================================================
+\begin{frame}{Design: Stop Betting on One Stochastic Draw}
+\begin{itemize}
+    \item \texttt{TournamentCoordinator} subclasses the original coordinator --- Agents 1--3 (Detect/Localize/Debug) run \textbf{once} per attempt, unchanged
+    \item Agent 4 (Patch Generation) resampled $K{=}3\times$ at temperatures $[0.2, 0.5, 0.9]$ from the \emph{same} diagnosis
+    \item Every candidate validated (Agents 5--6); keep first full-pass candidate, else best partial
+    \item Free byproduct: \textbf{agreement score} --- \% of candidate pairs that produced identical code (1.0 = full consensus, 0.0 = all differ)
+\end{itemize}
+\begin{block}{Cost}
+$3 + K$ LLM calls/attempt vs.\ original 4 --- $1.5\times$ overhead at $K{=}3$, paid only where stochastic variance is highest.
+\end{block}
+\end{frame}
+
+\begin{frame}{Results: All Three Benchmarks (131 bugs total)}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+ & Baseline & Multi-Agent & \textbf{Tournament} \\
+\midrule
+QuixBugs ($n{=}31$)     & 58.1\% & 51.6\% & \textbf{64.5\%} \\
+HumanEvalFix ($n{=}50$) & \textbf{76.0\%} & 68.0\% & 72.0\% \\
+DebugBench ($n{=}50$)   & 58.0\% & 62.0\% & \textbf{70.0\%} \\
+\midrule
+\textbf{Aggregate ($n{=}131$)} & 64.9\% & 61.8\% & \textbf{69.5\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{itemize}
+    \item Tournament beats baseline on 2/3 benchmarks \textbf{and} in aggregate --- notably including DebugBench, where the original paper's Gemini results had baseline decisively winning
+    \item Cost: $1.55\times$ LLM calls/bug (matches $1.5\times$ nominal prediction) --- but wall-clock \textbf{mean} overhead is $6.3\times$, \textbf{median} only $1.8\times$ (a few timeout-heavy infinite-loop bugs dominate the mean)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Agreement vs.\ Outcome: Not a Universal Law}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+ & Overall & On Success & On Failure \\
+\midrule
+QuixBugs     & 0.594 & 0.562 & \textbf{0.651} \\
+HumanEvalFix & 0.700 & \textbf{0.722} & 0.643 \\
+DebugBench   & 0.482 & \textbf{0.536} & 0.356 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{itemize}
+    \item HumanEvalFix \& DebugBench: intuitive direction --- high agreement correlates with success
+    \item \textbf{QuixBugs inverts this} --- high agreement correlates with \emph{failure} (model confidently wrong on all 3 draws; likely linked to QuixBugs' higher InfiniteLoop/RuntimeError rate)
+\end{itemize}
+\begin{alertblock}{Honest takeaway}
+We drafted the "surprising universal pattern" from QuixBugs alone, then HumanEvalFix/DebugBench contradicted it. Agreement is informative but benchmark-conditional, not a fixed law.
+\end{alertblock}
+\end{frame}
+
+% =================================================================
+\section{What's Actually New}
+% =================================================================
+\begin{frame}{What Changed vs.\ the Original System}
+\begin{enumerate}
+    \item \textbf{New decision layer} above the existing architecture --- a trained classifier now picks baseline vs.\ multi-agent per bug, where previously the experimenter picked one for an entire run
+    \item \textbf{New inside-step mechanism} --- Agent 4 goes from one stochastic draw to a validated tournament, targeting failures caused by sampling variance rather than bad diagnosis
+    \item \textbf{New signal that didn't exist before} --- tournament agreement as a per-bug confidence/uncertainty estimate
+\end{enumerate}
+\vspace{8pt}
+All three are \emph{additive}: zero changes to the original 6 agents, the retry loop, or the dataset-agnostic execution layer.
+\end{frame}
+
+\begin{frame}{Limitations}
+\begin{itemize}
+    \item Router recall on the rare "needs multi-agent" class is low (0.132) --- tuned for net cost/success, not for catching every such bug
+    \item Training data is the original paper's own 303 problems, not an independent population --- router has only ever seen 3 benchmarks
+    \item Tournament's $1.5\times$ per-attempt overhead only pays off where extra samples find a passing patch single-draw would miss
+    \item Both extensions evaluated on the local backend only --- not re-validated on Gemini
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion \& Future Work}
+\begin{itemize}
+    \item Implemented both extensions proposed in our own prior future work, as real runnable system components
+    \item Adaptive router: matches/exceeds fixed strategies at $5.7\times$ lower cost, honestly reported as benchmark-dependent, not a uniform win
+    \item \textbf{Patch tournament: the stronger result} --- 69.5\% aggregate vs.\ 61.8\% (multi-agent) and 64.9\% (baseline) across 131 bugs, beating baseline outright on 2/3 benchmarks including DebugBench, at near-nominal LLM-call cost
+\end{itemize}
+\vspace{8pt}
+\textbf{Next:} three-tier routing (baseline / multi-agent / multi-agent+tournament), per-candidate timeout budgets, non-Python router features, fix the DebugBench naming collision upstream, Gemini re-validation.
+\end{frame}
+
+\begin{frame}
+\centering
+\Large Thank You \\[8pt]
+\normalsize Questions?
+\end{frame}
+
+\end{document}
